@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#6c80d9" />
+    <meta
+      name="description"
+      content="친구들과 나누는 작은 교환일기장, 밀크티."
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>밀크티 · 우리만의 교환일기</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <div id="app">
+      <div class="initial-loading" role="status">밀크티를 열고 있어요…</div>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <dialog id="modal"></dialog>
+    <script src="./config.js"></script>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

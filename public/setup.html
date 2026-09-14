@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>밀크티 · 친구들과 함께 쓰기</title>
+    <link rel="icon" href="./favicon.svg" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f3f5ff;
+        color: #30374d;
+        font:
+          16px/1.9 "Malgun Gothic",
+          "Apple SD Gothic Neo",
+          sans-serif;
+        word-break: keep-all;
+      }
+      main {
+        max-width: 800px;
+        padding: 42px 24px 70px;
+        margin: auto;
+      }
+      a {
+        color: #536db4;
+        text-underline-offset: 4px;
+      }
+      .back {
+        font-size: 14px;
+      }
+      h1 {
+        font-size: 30px;
+        letter-spacing: -1px;
+        line-height: 1.5;
+        margin: 26px 0 12px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0 0 10px;
+      }
+      p {
+        color: #75829e;
+      }
+      .intro {
+        margin-bottom: 30px;
+      }
+      .step {
+        background: white;
+        border: 1px solid #e2e8f6;
+        border-radius: 18px;
+        padding: 27px;
+        margin-bottom: 16px;
+      }
+      .number {
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: #97a7cc;
+        font-weight: bold;
+        margin-bottom: 9px;
+      }
+      .step p {
+        margin: 7px 0;
+      }
+      .small {
+        font-size: 14px;
+      }
+      .note {
+        background: #e9efff;
+        color: #6a7fac;
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin-top: 25px;
+      }
+      strong {
+        color: #536b9d;
+      }
+      code {
+        font:
+          14px ui-monospace,
+          monospace;
+        background: #f0f3fb;
+        padding: 3px 6px;
+        border-radius: 4px;
+        overflow-wrap: anywhere;
+      }
+      .button {
+        display: inline-block;
+        background: #647bbf;
+        color: white;
+        text-decoration: none;
+        padding: 10px 17px;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-top: 12px;
+      }
+      .steps {
+        padding-left: 20px;
+        color: #7484a3;
+      }
+      .steps li {
+        margin-bottom: 8px;
+      }
+      @media (max-width: 500px) {
+        main {
+          padding: 25px 18px 45px;
+        }
+        h1 {
+          font-size: 25px;
+        }
+        .step {
+          padding: 22px;
+        }
+        h2 {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="./index.html">← 밀크티로 돌아가기</a>
+      <h1>이제 친구들과 함께 써볼까요?</h1>
+      <p class="intro">
+        화면과 기능은 준비됐어요. 같은 일기를 함께 보려면 로그인과 일기를 보관할
+        공간을 한 번 연결해야 합니다.
+      </p>
+      <section class="step">
+        <div class="number">STEP 01</div>
+        <h2>Supabase에 프로젝트 만들기</h2>
+        <p>Supabase는 로그인 계정과 일기·사진을 보관하는 서비스예요.</p>
+        <ol class="steps">
+          <li>아래 링크에서 가입하거나 로그인해주세요.</li>
+          <li>
+            새 프로젝트를 만들고 이름을 <strong>milktea</strong>로 정해주세요.
+          </li>
+          <li>
+            지역은 가능하면 서울을 선택하고, 데이터베이스 비밀번호는 본인이
+            안전하게 보관해주세요.
+          </li>
+        </ol>
+        <a
+          class="button"
+          href="https://supabase.com/dashboard"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Supabase 열기 ↗</a
+        >
+        <p class="small">
+          가입 과정에서 요금제 선택 화면이 나오면 본인에게 맞는 요금과 조건을
+          확인해주세요.
+        </p>
+      </section>
+      <section class="step">
+        <div class="number">STEP 02</div>
+        <h2>만들었다고 Codex에 알려주기</h2>
+        <p>
+          <strong>“Supabase 프로젝트 만들었어. 연결 도와줘.”</strong>라고
+          말씀해주세요.
+        </p>
+        <p>
+          밀크티에 맞는 저장 공간과 접근 권한을 만드는 파일은 이미 준비되어
+          있어요. 화면을 보면서 연결 단계를 이어갈 수 있습니다.
+        </p>
+        <p class="small">
+          연결에는 Project URL과 <code>publishable key</code>를 사용합니다.
+          데이터베이스 비밀번호나 <code>secret / service_role key</code>는
+          채팅에 보내지 마세요.
+        </p>
+      </section>
+      <section class="step">
+        <div class="number">STEP 03</div>
+        <h2>내 계정과 친구 계정 초대하기</h2>
+        <p>
+          저장 공간을 연결한 뒤 사용할 계정들을 초대하고, 모임 이용자로
+          승인합니다. 처음에는 내 계정과 친구 한 명으로 일기·사진·댓글이 서로
+          보이는지 확인해요.
+        </p>
+        <p>
+          그다음 밀크티 주소를 친구들에게 알려주면 됩니다. 아무나 회원가입하는
+          버튼은 두지 않습니다.
+        </p>
+      </section>
+      <div class="note">
+        <strong>지금의 체험 공간과 실제 모임은 별개예요.</strong><br />체험 중
+        쓴 글과 예시 친구들은 이 브라우저에만 저장되고, 실제 모임에 자동으로
+        옮겨지지 않습니다.
+      </div>
+      <p class="small" style="margin-top: 25px">
+        참고:
+        <a
+          href="https://supabase.com/docs/guides/getting-started"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Supabase 시작 안내</a
+        >
+        ·
+        <a
+          href="https://supabase.com/docs/guides/getting-started/api-keys"
+          target="_blank"
+          rel="noopener noreferrer"
+          >연결 키 안내</a
+        >
+      </p>
+    </main>
+  </body>
+</html>
