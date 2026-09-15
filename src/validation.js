@@ -1,5 +1,6 @@
 import { today, validDate } from "./dates.js";
 import { userError } from "./ui.js";
+import { validMusic, musicLinkHelp } from "./music.js";
 export function parseTags(input) {
   const tags = [
     ...new Set(
@@ -19,6 +20,7 @@ export function validateEntry(entry) {
   if (entry.title.length > 100)
     throw userError("제목은 100자까지 쓸 수 있어요.");
   const d = entry.document;
+  if (!validMusic(d.music)) throw userError(musicLinkHelp);
   if (d.blocks.length > 100 || d.stickers.length > 40 || d.habits.length > 30)
     throw userError(
       "글·사진은 100개, 스티커는 40개, 생활 기록은 30개까지 넣을 수 있어요.",

@@ -1,0 +1,62 @@
+[
+  {
+    "file": "Pretendard-Regular.woff2",
+    "source": "https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2",
+    "sha256": "fad853f7f47c6c8b103171e7193fa095708cdcd70850a71d93aa5379e8a61d63",
+    "bytes": 765892
+  },
+  {
+    "file": "Pretendard-SemiBold.woff2",
+    "source": "https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2",
+    "sha256": "c863f76a7de5c1ddc1ed8b2fa794964530774592c4f31407a84e2a2ae93f17f0",
+    "bytes": 785856
+  },
+  {
+    "file": "Pretendard-Bold.woff2",
+    "source": "https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2",
+    "sha256": "4609c3356e536fafe38f4add0daeceb3d8595d3057bce13c428c33ddbd43d362",
+    "bytes": 791156
+  },
+  {
+    "file": "SUIT-Regular.woff2",
+    "source": "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_suit@1.0/SUIT-Regular.woff2",
+    "sha256": "589a2cc42e73c55d456f0c2af28e414893e29c3705fd199f5c57b33c24effe44",
+    "bytes": 163664
+  },
+  {
+    "file": "GowunDodum-Regular.woff",
+    "source": "https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunDodum-Regular.woff",
+    "sha256": "e1417b9b0cb9b0fd89b86f555418c8c77ce332e0c9040dd05e6b5bd657f74b00",
+    "bytes": 1438060
+  },
+  {
+    "file": "MaruBuri-Regular.woff2",
+    "source": "https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2",
+    "sha256": "4cf1341cf2f23fb3e263712dfde1d8f25eedcc328b696a2e5a2c8add55e5c17b",
+    "bytes": 433776
+  },
+  {
+    "file": "Pretendard-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/orioncactus/pretendard/main/LICENSE",
+    "sha256": "82e9c8a4b203261f10ddba1296422d64914ff3d4b7bd8a12896d03f0f088d70a",
+    "bytes": 4816
+  },
+  {
+    "file": "SUIT-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/sun-typeface/SUIT/main/LICENSE",
+    "sha256": "30d101ee3c35ef629d622d933d261a27b2f60223e0a3b0f36791e569c2b9daa9",
+    "bytes": 4380
+  },
+  {
+    "file": "GowunDodum-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/google/fonts/main/ofl/gowundodum/OFL.txt",
+    "sha256": "a7c73f9521cd646bbdfb6684c99a62311bbd7bce11898dc11ef0b3c69eda1aca",
+    "bytes": 4395
+  },
+  {
+    "file": "MaruBuri-LICENSE.txt",
+    "source": "https://help.naver.com/service/30016/contents/18088?osType=PC&lang=ko",
+    "sha256": "574d9c407182872c3b5ff2207f18fab0949178e3c70a5ec0d8f721feb8d26141",
+    "bytes": 11279
+  }
+]

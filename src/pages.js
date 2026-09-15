@@ -17,29 +17,35 @@ import {
 function heading(title, subtitle, actions = "") {
   return `<header class="page-heading"><div><h1>${e(title)}</h1>${subtitle ? `<p>${e(subtitle)}</p>` : ""}</div>${actions}</header>`;
 }
-function calendarHTML(date, entries, me) {
+function calendarHTML(date, entries, me, expandOnMonthChange = false) {
   const month = date.slice(0, 7);
   const [year, m] = month.split("-").map(Number);
   const offset = new Date(`${month}-01T12:00:00Z`).getUTCDay();
   const days = monthDays(month);
   const current = today();
+  const expanded = expandOnMonthChange ? "&calendar=1" : "";
   const values = new Map();
   for (const entry of entries.filter((x) => x.status === "published")) {
-    const v = values.get(entry.diary_date) || { count: 0, mine: false };
+    const v = values.get(entry.diary_date) || {
+      count: 0,
+      friends: false,
+      mine: false,
+    };
     v.count++;
+    v.friends ||= entry.author_id !== me;
     v.mine ||= entry.author_id === me;
     values.set(entry.diary_date, v);
   }
-  return `<section class="calendar card" aria-label="일기 달력"><div class="calendar-top"><h2>${year}년 ${m}월</h2><div class="calendar-actions"><a class="today-button" href="#/home?date=${current}">오늘</a><a class="icon-button" href="#/home?date=${changeMonth(date, -1)}" aria-label="이전 달">${icon("chevron", "left")}</a><a class="icon-button" href="#/home?date=${changeMonth(date, 1)}" aria-label="다음 달">${icon("chevron")}</a></div></div><div class="calendar-grid">${["일", "월", "화", "수", "목", "금", "토"].map((d) => `<span class="weekday">${d}</span>`).join("")}${'<span aria-hidden="true"></span>'.repeat(offset)}${Array.from(
+  return `<section class="calendar" aria-label="일기 달력"><div class="calendar-top"><h2>${year}년 ${m}월</h2><div class="calendar-actions"><a class="today-button" href="#/home?date=${current}">오늘</a><a class="icon-button" href="#/home?date=${changeMonth(date, -1)}${expanded}" aria-label="이전 달">${icon("chevron", "left")}</a><a class="icon-button" href="#/home?date=${changeMonth(date, 1)}${expanded}" aria-label="다음 달">${icon("chevron")}</a></div></div><div class="calendar-grid">${["일", "월", "화", "수", "목", "금", "토"].map((d) => `<span class="weekday">${d}</span>`).join("")}${'<span aria-hidden="true"></span>'.repeat(offset)}${Array.from(
     { length: days },
     (_, i) => {
       const day = `${month}-${String(i + 1).padStart(2, "0")}`;
       const value = values.get(day);
-      return `<a class="calendar-day ${date === day ? "selected" : ""} ${day === current ? "is-today" : ""} ${day > current ? "future" : ""}" href="#/home?date=${day}" ${date === day ? 'aria-current="date"' : ""} aria-label="${m}월 ${i + 1}일${day === current ? ", 오늘" : ""}${value ? `, 일기 ${value.count}편${value.mine ? ", 내 일기 있음" : ""}` : ", 일기 없음"}"><span class="date-number">${i + 1}</span>${value ? '<i class="day-dot" aria-hidden="true"></i>' : ""}${value?.mine ? '<span class="day-star" aria-hidden="true">★</span>' : ""}</a>`;
+      return `<a class="calendar-day ${date === day ? "selected" : ""} ${day === current ? "is-today" : ""} ${day > current ? "future" : ""}" href="#/home?date=${day}" ${date === day ? 'aria-current="date"' : ""} aria-label="${m}월 ${i + 1}일${day === current ? ", 오늘" : ""}${value ? `, 일기 ${value.count}편${value.friends ? ", 친구 일기 있음" : ""}${value.mine ? ", 내 일기 있음" : ""}` : ", 일기 없음"}"><span class="date-number">${i + 1}</span><span class="day-entry-markers" aria-hidden="true">${value?.friends ? '<span class="entry-bar friends"></span>' : ""}${value?.mine ? '<span class="entry-bar mine"></span>' : ""}</span></a>`;
     },
   ).join(
     "",
-  )}</div><div class="calendar-legend"><span>● 친구 일기</span><span>★ 내 일기</span><span>테두리 · 오늘</span></div></section>`;
+  )}</div><div class="calendar-legend"><span><i class="entry-bar friends" aria-hidden="true"></i>친구 일기</span><span><i class="entry-bar mine" aria-hidden="true"></i>내 일기</span><span>테두리 · 오늘</span></div></section>`;
 }
 async function mountFeed(
   container,
@@ -96,6 +102,7 @@ export async function homePage(root, ctx, params) {
     (x) => x.status === "published" && x.diary_date === date,
   );
   root.innerHTML =
+    `<div class="home-page">` +
     heading(
       "우리들의 오늘",
       "평범한 하루도, 함께 적으면 특별해져요.",
@@ -103,8 +110,18 @@ export async function homePage(root, ctx, params) {
         ? `<a class="button" href="#/write?date=${date}">${icon("plus")} 일기 쓰기</a>`
         : "",
     ) +
-    calendarHTML(date, ctx.state.entries, ctx.me.id) +
-    `<div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div>`;
+    `<details class="home-mobile-calendar" ${params.get("calendar") === "1" ? "open" : ""}><summary>${icon("calendar")}<span>월별로 보기</span>${icon("chevron")}</summary>${calendarHTML(date, ctx.state.entries, ctx.me.id, true)}</details><div class="home-layout"><section class="home-stream" aria-label="선택한 날짜의 일기"><div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div></section><aside class="home-calendar" aria-label="월별 일기 찾아보기">${calendarHTML(date, ctx.state.entries, ctx.me.id)}</aside></div></div>`;
+  const mobileCalendar = root.querySelector(".home-mobile-calendar");
+  mobileCalendar.addEventListener(
+    "click",
+    (event) => {
+      if (event.target.closest(".calendar-day, .today-button")) {
+        mobileCalendar.open = false;
+        mobileCalendar.querySelector("summary").focus({ preventScroll: true });
+      }
+    },
+    { signal: ctx.signal },
+  );
   const feed = root.querySelector("#feed");
   if (!entries.length) {
     feed.innerHTML = emptyState(
@@ -118,9 +135,9 @@ export async function homePage(root, ctx, params) {
   }
   await mountFeed(feed, ctx, entries);
 }
-function streakHTML(ctx) {
+function streakHTML(ctx, profile) {
   const dates = ctx.state.entries
-    .filter((x) => x.author_id === ctx.me.id && x.status === "published")
+    .filter((x) => x.author_id === profile.id && x.status === "published")
     .map((x) => x.diary_date);
   const unique = new Set(dates);
   const reference = today();
@@ -132,7 +149,7 @@ function streakHTML(ctx) {
       )
     : weekDates(reference);
   const n = days.filter((x) => unique.has(x)).length;
-  return `<section class="streak-card card" aria-label="본인만 보는 연참"><div class="streak-heading"><h2>🌱 ${streak(dates)}일째, 차곡차곡</h2><small>나에게만 보이는 기록</small></div><div class="streak-days">${days.map((date, i) => `<div class="streak-day ${unique.has(date) ? "done" : ""}"><span>${monthly ? Number(date.slice(-2)) : ["월", "화", "수", "목", "금", "토", "일"][i]}</span><span class="streak-circle" aria-label="${date} ${unique.has(date) ? "작성함" : "작성 안 함"}">${unique.has(date) ? "✓" : "·"}</span></div>`).join("")}</div><p class="streak-bottom">${monthly ? "이번 달" : "이번 주"} ${n} / ${days.length}일 기록했어요. &nbsp;<a href="#/settings/diary">표시 설정</a></p></section>`;
+  return `<section class="streak-card card" aria-label="${e(profile.nickname)}의 연참"><div class="streak-heading"><h2>🌱 ${streak(dates)}일째, 차곡차곡</h2><small>게시한 일기 기준</small></div><div class="streak-days">${days.map((date, i) => `<div class="streak-day ${unique.has(date) ? "done" : ""}"><span>${monthly ? Number(date.slice(-2)) : ["월", "화", "수", "목", "금", "토", "일"][i]}</span><span class="streak-circle" aria-label="${date} ${unique.has(date) ? "작성함" : "작성 안 함"}">${unique.has(date) ? "✓" : "·"}</span></div>`).join("")}</div><p class="streak-bottom">${monthly ? "이번 달" : "이번 주"} ${n} / ${days.length}일 기록했어요. &nbsp;<a href="#/settings/diary">표시 설정</a></p></section>`;
 }
 export async function personPage(root, ctx, id, archive, params) {
   const p = ctx.state.profiles.find((x) => x.id === id);
@@ -146,7 +163,7 @@ export async function personPage(root, ctx, id, archive, params) {
   let entries = ctx.state.entries.filter(
     (x) => x.author_id === id && x.status === "published",
   );
-  root.innerHTML = `<header class="profile-head">${avatar(p, "large")}<h1>${e(p.nickname)}의 일기장</h1><p>작고 소중한 하루들 · 총 ${entries.length}편의 일기</p><div class="profile-buttons"><a class="button ${archive ? "secondary" : "soft"}" href="#/people/${id}${archive ? "" : "/archive"}">${icon(archive ? "book" : "archive")}${archive ? "일기로 보기" : "모아보기"}</a>${id === ctx.me.id ? '<a class="button secondary" href="#/drafts">임시저장</a>' : ""}</div></header>${id === ctx.me.id && !archive ? streakHTML(ctx) : ""}<div id="person-feed"></div>`;
+  root.innerHTML = `<header class="profile-head">${avatar(p, "large")}<h1>${e(p.nickname)}의 일기장</h1><p>작고 소중한 하루들 · 총 ${entries.length}편의 일기</p><div class="profile-buttons"><a class="button ${archive ? "secondary" : "soft"}" href="#/people/${id}${archive ? "" : "/archive"}">${icon(archive ? "book" : "archive")}${archive ? "일기로 보기" : "모아보기"}</a>${id === ctx.me.id ? '<a class="button secondary" href="#/drafts">임시저장</a>' : ""}</div></header>${!archive ? streakHTML(ctx, p) : ""}<div id="person-feed"></div>`;
   await hydrateAssets(root, ctx.repo);
   const feed = root.querySelector("#person-feed");
   if (archive) {

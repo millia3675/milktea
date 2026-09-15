@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>밀크티 · 친구들과 함께 쓰기</title>
     <link rel="icon" href="./favicon.svg" />
+    <link rel="stylesheet" href="./fonts/noto-color-emoji.css" />
     <style>
+      @font-face {
+        font-family: "Pretendard";
+        src: url("./fonts/Pretendard-Regular.woff2") format("woff2");
+        font-display: swap;
+      }
       * {
         box-sizing: border-box;
       }
@@ -14,7 +20,10 @@
         background: #f3f5ff;
         color: #30374d;
         font:
-          16px/1.9 "Malgun Gothic",
+          16px/1.9 "Noto Color Emoji",
+          "Pretendard",
+          "Noto Color Emoji Keycaps",
+          "Malgun Gothic",
           "Apple SD Gothic Neo",
           sans-serif;
         word-break: keep-all;
@@ -79,7 +88,9 @@
       }
       code {
         font:
-          14px ui-monospace,
+          14px "Noto Color Emoji",
+          ui-monospace,
+          "Noto Color Emoji Keycaps",
           monospace;
         background: #f0f3fb;
         padding: 3px 6px;

@@ -86,9 +86,10 @@ export async function uploadImage(repo, file, kind, options) {
     name: file.name,
     mime: "image/webp",
     extension: "webp",
+    shared: options?.shared === true,
   });
 }
-export async function uploadFont(repo, file) {
+export async function uploadFont(repo, file, options) {
   const ext = file.name.split(".").pop().toLowerCase();
   if (!mimeByExt[ext])
     throw userError("WOFF2, WOFF, TTF, OTF 폰트를 선택해주세요.");
@@ -118,24 +119,7 @@ export async function uploadFont(repo, file) {
     name: file.name.replace(/\.[^.]+$/, ""),
     mime: mimeByExt[ext],
     extension: ext,
-  });
-}
-export async function emojiSticker(repo, emoji) {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 192;
-  const ctx = canvas.getContext("2d");
-  ctx.font = '144px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(emoji, 96, 104);
-  const blob = await new Promise((resolve) =>
-    canvas.toBlob(resolve, "image/png"),
-  );
-  return repo.upload(blob, {
-    kind: "sticker",
-    name: `기본 ${emoji}`,
-    extension: "png",
-    mime: "image/png",
+    shared: options?.shared === true,
   });
 }
 const fonts = new Map();

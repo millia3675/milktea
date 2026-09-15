@@ -2,6 +2,7 @@ import { e, icon, busy, modal, confirmAction, toast, errorText } from "./ui.js";
 import { formatDate, formatTime } from "./dates.js";
 import { safeColor } from "./validation.js";
 import { pickFiles, uploadImage, fontFamily } from "./media.js";
+import { musicHTML, bindMusicPlayers } from "./music-ui.js";
 export const emojis = ["👍", "❤️", "😂", "🐱", "✨", "🫂", "🍀", "🔥"];
 export function avatar(profile, size = "") {
   const label = profile?.nickname || "친구";
@@ -40,7 +41,7 @@ export function commentsHTML(entry, comments, ctx, detail = false) {
   return `${visible
     .map((c) => {
       const author = ctx.state.profiles.find((p) => p.id === c.author_id);
-      return `<div class="comment-row" data-comment="${e(c.id)}"><div class="comment-meta"><strong>${e(author?.nickname || "친구")}</strong><time datetime="${e(c.created_at)}">${formatTime(c.created_at)}</time><div class="comment-tools">${c.author_id === ctx.me.id ? `<button data-edit-comment="${e(c.id)}">수정</button>` : ""}${c.author_id === ctx.me.id || entry.author_id === ctx.me.id ? `<button data-delete-comment="${e(c.id)}">삭제</button>` : ""}</div></div><p class="comment-text">${e(c.content)}</p>${c.image_asset_id ? `<button data-full-image="${e(c.image_asset_id)}" aria-label="댓글 사진 크게 보기"><img data-asset="${e(c.image_asset_id)}" class="comment-photo" alt="댓글에 첨부한 사진" hidden></button>` : ""}</div>`;
+      return `<div class="comment-row" data-comment="${e(c.id)}"><div class="comment-meta"><span class="comment-author">${avatar(author, "tiny")}<strong title="${e(author?.nickname || "친구")}">${e(author?.nickname || "친구")}</strong></span><time datetime="${e(c.created_at)}">${formatTime(c.created_at)}</time><div class="comment-tools">${c.author_id === ctx.me.id ? `<button data-edit-comment="${e(c.id)}">수정</button>` : ""}${c.author_id === ctx.me.id || entry.author_id === ctx.me.id ? `<button data-delete-comment="${e(c.id)}">삭제</button>` : ""}</div></div><p class="comment-text">${e(c.content)}</p>${c.image_asset_id ? `<button data-full-image="${e(c.image_asset_id)}" aria-label="댓글 사진 크게 보기"><img data-asset="${e(c.image_asset_id)}" class="comment-photo" alt="댓글에 첨부한 사진" hidden></button>` : ""}</div>`;
     })
     .join(
       "",
@@ -73,7 +74,7 @@ export function articleHTML(
       d.blocks
         .filter((b) => b.type === "text")
         .reduce((n, b) => n + b.text.length, 0) > 750);
-  return `<article class="diary-card" data-entry-card="${e(entry.id)}" data-detail="${detail}"><header class="diary-author"><a href="#/people/${e(entry.author_id)}" aria-label="${e(profile?.nickname)}의 일기장">${avatar(profile)}</a><div><a class="author-link" href="#/people/${e(entry.author_id)}">${e(profile?.nickname || "친구")}</a><a class="date-label" href="#/home?date=${e(entry.diary_date)}">${entry.diary_date.replaceAll("-", ". ")}${entry.status === "draft" ? " · 임시저장" : ""}</a></div>${entry.author_id === ctx.me.id ? `<div class="entry-actions"><a class="icon-button" href="#/write/${e(entry.id)}" aria-label="일기 수정">${icon("pen")}</a><button class="icon-button" data-delete-entry="${e(entry.id)}" aria-label="일기 삭제">${icon("trash")}</button></div>` : ""}</header>${entry.tags.length ? `<div class="tag-list">${entry.tags.map((t) => `<a class="tag" style="background:${safeColor(profile?.main_color)}12" href="#/people/${e(entry.author_id)}/archive?month=${e(entry.diary_date.slice(0, 7))}&tag=${encodeURIComponent(t)}">#${e(t)}</a>`).join("")}</div>` : ""}${d.habits?.length ? `<div class="habit-list">${d.habits.map((h) => `<span>${e(h.name)} ${h.type === "boolean" ? (h.value ? "✓" : "○") : `${e(h.value)}${e(h.unit)}`}</span>`).join("")}</div>` : ""}<h2 class="diary-title"><a href="#/entries/${e(entry.id)}">${e(entryTitle(entry))}</a></h2><div class="paper ${e(d.paper || "white")} font-${e(d.font || "system")}" ${d.background_asset_id ? `data-background="${e(d.background_asset_id)}"` : ""} ${d.font_asset_id ? `data-font="${e(d.font_asset_id)}"` : ""}><div class="blocks">${content}</div>${!shortened ? `<div class="sticker-layer" aria-hidden="true">${(d.stickers || []).map((s) => `<span class="placed-sticker" style="left:${Number(s.x) * 100}%;top:${Number(s.y) * 100}%;transform:translate(-50%,-50%) rotate(${Number(s.rotation)}deg) scale(${Number(s.scale)});z-index:${Number(s.z)}"><img data-asset="${e(s.asset_id)}" alt="" hidden></span>`).join("")}</div>` : ""}</div>${shortened ? `<a class="read-more" href="#/entries/${e(entry.id)}">일기 전체 보기 ${icon("chevron")}</a>` : ""}${entry.status === "published" ? `<div class="reactions">${reactionHTML(entry.id, reactions, ctx.me.id)}</div>` : ""}<div class="comments">${commentsHTML(entry, comments, ctx, detail)}</div></article>`;
+  return `<article class="diary-card" data-entry-card="${e(entry.id)}" data-detail="${detail}"><header class="diary-author"><a href="#/people/${e(entry.author_id)}" aria-label="${e(profile?.nickname)}의 일기장">${avatar(profile)}</a><div><a class="author-link" href="#/people/${e(entry.author_id)}">${e(profile?.nickname || "친구")}</a><a class="date-label" href="#/home?date=${e(entry.diary_date)}">${entry.diary_date.replaceAll("-", ". ")}${entry.status === "draft" ? " · 임시저장" : ""}</a></div>${entry.author_id === ctx.me.id ? `<div class="entry-actions"><a class="icon-button" href="#/write/${e(entry.id)}" aria-label="일기 수정">${icon("pen")}</a><button class="icon-button" data-delete-entry="${e(entry.id)}" aria-label="일기 삭제">${icon("trash")}</button></div>` : ""}</header><h2 class="diary-title"><a href="#/entries/${e(entry.id)}">${e(entryTitle(entry))}</a></h2><div class="paper ${e(d.paper || "white")} font-${e(d.font || "system")}" ${d.background_asset_id ? `data-background="${e(d.background_asset_id)}"` : ""} ${d.font_asset_id ? `data-font="${e(d.font_asset_id)}"` : ""}><div class="blocks">${content}</div>${!shortened ? `<div class="sticker-layer" aria-hidden="true">${(d.stickers || []).map((s) => `<span class="placed-sticker" style="left:${Number(s.x) * 100}%;top:${Number(s.y) * 100}%;transform:translate(-50%,-50%) rotate(${Number(s.rotation)}deg) scale(${Number(s.scale)});z-index:${Number(s.z)}"><img data-asset="${e(s.asset_id)}" alt="" hidden></span>`).join("")}</div>` : ""}</div>${shortened ? `<a class="read-more" href="#/entries/${e(entry.id)}">일기 전체 보기 ${icon("chevron")}</a>` : ""}${musicHTML(d.music, entry.id)}${entry.tags.length || d.habits?.length ? `<div class="entry-notes">${entry.tags.length ? `<div class="tag-list">${entry.tags.map((t) => `<a class="tag" style="background:${safeColor(profile?.main_color)}12" href="#/people/${e(entry.author_id)}/archive?month=${e(entry.diary_date.slice(0, 7))}&tag=${encodeURIComponent(t)}">#${e(t)}</a>`).join("")}</div>` : ""}${d.habits?.length ? `<div class="habit-list"><span class="habit-label">생활 기록</span>${d.habits.map((h) => `<span>${e(h.name)} ${h.type === "boolean" ? (h.value ? "✓" : "○") : `${e(h.value)}${e(h.unit)}`}</span>`).join("")}</div>` : ""}</div>` : ""}${entry.status === "published" ? `<div class="reactions">${reactionHTML(entry.id, reactions, ctx.me.id)}</div>` : ""}<div class="comments">${commentsHTML(entry, comments, ctx, detail)}</div></article>`;
 }
 export async function hydrateAssets(root, repo) {
   const tasks = [];
@@ -115,8 +116,13 @@ export async function hydrateAssets(root, repo) {
     tasks.push(
       (async () => {
         try {
-          const url = await repo.assetURL(paper.dataset.background);
-          if (url && paper.isConnected) {
+          const assetId = paper.dataset.background;
+          const url = await repo.assetURL(assetId);
+          if (
+            url &&
+            paper.isConnected &&
+            paper.dataset.background === assetId
+          ) {
             paper.classList.add("custom-paper");
             paper.style.backgroundImage = `url("${url}")`;
           }
@@ -127,15 +133,17 @@ export async function hydrateAssets(root, repo) {
     tasks.push(
       (async () => {
         try {
-          const family = await fontFamily(repo, paper.dataset.font);
-          if (family && paper.isConnected)
-            paper.style.fontFamily = `"${family}", sans-serif`;
+          const assetId = paper.dataset.font;
+          const family = await fontFamily(repo, assetId);
+          if (family && paper.isConnected && paper.dataset.font === assetId)
+            paper.style.fontFamily = `"Noto Color Emoji", "${family}", "Noto Color Emoji Keycaps", sans-serif`;
         } catch {}
       })(),
     );
   await Promise.allSettled(tasks);
 }
 export function bindArticles(root, ctx, loaded) {
+  bindMusicPlayers(root, ctx.signal);
   const pendingPhotos = new Map();
   const getEntry = (id) => loaded.entries.find((x) => x.id === id);
   const reloadComments = async (entryId) => {

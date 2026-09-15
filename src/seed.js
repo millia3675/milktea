@@ -16,6 +16,7 @@ export function emptyDocument() {
     blocks: [],
     stickers: [],
     habits: [],
+    music: null,
   };
 }
 export function makeSeed() {

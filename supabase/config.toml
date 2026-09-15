@@ -1,0 +1,13 @@
+# Only declare the hosted settings that Milktea needs.
+project_id = "milktea"
+
+[auth]
+site_url = "https://millia3675.github.io/milktea/"
+additional_redirect_urls = ["https://millia3675.github.io/milktea/auth-callback.html"]
+enable_signup = false
+enable_anonymous_sign_ins = false
+minimum_password_length = 12
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true

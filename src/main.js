@@ -1,4 +1,5 @@
 import "./styles.css";
+import "./paper.css";
 import {
   CloudRepository,
   DemoRepository,

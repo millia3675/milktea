@@ -8,6 +8,11 @@ export const e = (value) =>
   );
 export const uuid = () => crypto.randomUUID();
 const paths = {
+  music:
+    '<path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/>',
+  play: '<path d="m8 4 12 8-12 8z"/>',
+  pause: '<path d="M8 4v16M16 4v16"/>',
+  external: '<path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/>',
   home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',
   pen: '<path d="m16 3 5 5-12 12-6 1 1-6zM14 5l5 5"/>',
   settings:
@@ -51,6 +56,8 @@ export function errorText(error) {
   Object.assign(map, {
     FUTURE_DIARY_DATE: "미래 날짜로는 쓸 수 없어요.",
     EMPTY_ENTRY: "내용이나 사진을 추가해주세요.",
+    INVALID_MUSIC:
+      "음악 링크를 확인해주세요. YouTube 또는 YouTube Music 공유 링크를 넣을 수 있어요.",
     ASSET_TYPE_OR_OWNER_MISMATCH:
       "사용할 수 없는 첨부 파일이에요. 다시 선택해주세요.",
     "Invalid login credentials": "이메일이나 비밀번호를 다시 확인해주세요.",
@@ -88,11 +95,11 @@ export async function busy(button, action) {
     }
   }
 }
-let returnFocus;
 export function modal(html, className = "") {
-  const d = document.querySelector("#modal");
-  if (d.open) d.close();
-  returnFocus = document.activeElement;
+  const d = document.createElement("dialog");
+  if (!document.querySelector("dialog[open]")) d.id = "modal";
+  document.body.append(d);
+  const returnFocus = document.activeElement;
   d.className = className;
   d.innerHTML = `<button class="icon-button modal-close" aria-label="닫기">${icon("close")}</button>${html}`;
   d.querySelector(".modal-close").onclick = () => d.close();
@@ -109,6 +116,7 @@ export function modal(html, className = "") {
     }
   };
   d.onclose = () => {
+    d.remove();
     if (returnFocus?.isConnected) returnFocus.focus();
   };
   d.showModal();

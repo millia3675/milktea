@@ -1,6 +1,11 @@
+import {
+  mountLibrary,
+  fontOptions,
+  builtinPapers,
+} from "./decoration-library.js";
 import { e, icon, busy, toast, modal, confirmAction, userError } from "./ui.js";
 import { avatar, hydrateAssets } from "./articles.js";
-import { pickFiles, uploadImage, uploadFont } from "./media.js";
+import { pickFiles, uploadImage } from "./media.js";
 import { client } from "./repository.js";
 const colors = [
   "#6C80D9",
@@ -149,42 +154,24 @@ export async function settingsPage(root, ctx, section) {
   }
   if (section === "diary") {
     const p = ctx.state.preferences;
-    content.innerHTML = `<form class="settings-card" id="preferences-form"><h2>내 기록을 보는 방법</h2><div class="form-field"><label>연참 표시</label><div class="radio-group"><label class="radio-option"><input type="radio" name="streak_mode" value="weekly" ${p.streak_mode === "weekly" ? "checked" : ""}>Weekly · 이번 주</label><label class="radio-option"><input type="radio" name="streak_mode" value="monthly" ${p.streak_mode === "monthly" ? "checked" : ""}>Monthly · 이번 달</label></div><span class="field-help">연참 상세와 이 설정은 본인에게만 보여요.</span></div><div class="form-field"><label for="default-paper">기본 종이</label><select id="default-paper" name="default_paper">${[
-      ["white", "기본 흰색"],
-      ["lined", "줄노트"],
-      ["grid", "모눈종이"],
-      ["cream", "크림색"],
-    ]
+    content.innerHTML = `<form class="settings-card" id="preferences-form"><h2>내 기록을 보는 방법</h2><div class="form-field"><label>연참 표시</label><div class="radio-group"><label class="radio-option"><input type="radio" name="streak_mode" value="weekly" ${p.streak_mode === "weekly" ? "checked" : ""}>Weekly · 이번 주</label><label class="radio-option"><input type="radio" name="streak_mode" value="monthly" ${p.streak_mode === "monthly" ? "checked" : ""}>Monthly · 이번 달</label></div><span class="field-help">나와 친구의 연참을 볼 때 적용돼요. 연참은 게시한 일기로 계산하며 임시저장은 제외해요.</span></div><div class="form-field"><label for="default-paper">기본 종이</label><select id="default-paper" name="default_paper">${builtinPapers
       .map(
         ([v, l]) =>
           `<option value="${v}" ${p.default_paper === v && !p.default_background_asset_id ? "selected" : ""}>${l}</option>`,
       )
       .join("")}${ctx.state.assets
-      .filter((a) => a.kind === "background" && !a.archived)
+      .filter(
+        (a) =>
+          a.kind === "background" &&
+          (!a.archived || a.id === p.default_background_asset_id),
+      )
       .map(
         (a) =>
           `<option value="asset:${a.id}" ${p.default_background_asset_id === a.id ? "selected" : ""}>${e(a.name)}</option>`,
       )
       .join(
         "",
-      )}</select></div><div class="form-field"><label for="default-font">기본 글씨체</label><select id="default-font" name="default_font">${[
-      ["system", "기본 글씨"],
-      ["sans", "깔끔한 글씨"],
-      ["handwriting", "편안한 글씨"],
-    ]
-      .map(
-        ([v, l]) =>
-          `<option value="${v}" ${p.default_font === v && !p.default_font_asset_id ? "selected" : ""}>${l}</option>`,
-      )
-      .join("")}${ctx.state.assets
-      .filter((a) => a.kind === "font" && !a.archived)
-      .map(
-        (a) =>
-          `<option value="asset:${a.id}" ${p.default_font_asset_id === a.id ? "selected" : ""}>${e(a.name)}</option>`,
-      )
-      .join(
-        "",
-      )}</select><span class="field-help">새로 쓰는 일기에 적용돼요. 예전 일기는 그대로 유지됩니다.</span></div><div class="settings-actions"><button class="button" type="submit">일기 설정 저장</button></div></form><section class="settings-card"><h2>나의 생활 기록 항목</h2><p class="muted small">체크하는 항목과 숫자로 적는 항목을 만들 수 있어요.</p><div id="habit-fields">${
+      )}</select></div><div class="form-field"><label for="default-font">기본 글씨체</label><select id="default-font" name="default_font">${fontOptions(ctx.state.assets, p.default_font, p.default_font_asset_id)}</select><span class="field-help">새로 쓰는 일기에 적용돼요. 예전 일기는 그대로 유지됩니다.</span></div><div class="settings-actions"><button class="button" type="submit">일기 설정 저장</button></div></form><section class="settings-card"><h2>나의 생활 기록 항목</h2><p class="muted small">체크하는 항목과 숫자로 적는 항목을 만들 수 있어요.</p><div id="habit-fields">${
       ctx.state.habits
         .filter((h) => !h.archived)
         .map(
@@ -261,55 +248,15 @@ export async function settingsPage(root, ctx, section) {
   }
   if (section === "decorate") {
     content.innerHTML =
-      [
-        ["sticker", "내 스티커", "PNG · WebP, 최대 2MB"],
-        ["background", "내 배경", "JPG · PNG · WebP, 최대 8MB"],
-        ["font", "내 글씨체", "WOFF2 · WOFF · TTF · OTF, 최대 10MB"],
-      ]
-        .map(([kind, label, limit]) => {
-          const assets = ctx.state.assets.filter(
-            (x) => x.kind === kind && !x.archived,
-          );
-          return `<section class="settings-card library-section"><div class="library-heading"><h2>${label}</h2><button class="button secondary" data-upload-kind="${kind}">${icon("plus")} 등록</button></div>${assets.length ? `<div class="asset-grid">${assets.map((a) => `<div class="asset-tile">${kind === "font" ? '<div class="font-file">가나다</div>' : `<img data-asset="${e(a.id)}" alt="${e(a.name)}" hidden>`}<span title="${e(a.name)}">${e(a.name)}</span><button class="icon-button" data-archive-asset="${e(a.id)}" aria-label="${e(a.name)} 라이브러리에서 숨기기">${icon("close")}</button></div>`).join("")}</div>` : `<div class="asset-empty">좋아하는 ${kind === "sticker" ? "스티커를" : kind === "background" ? "배경을" : "글씨체를"} 등록해보세요.</div>`}<p class="field-help">${limit}${kind === "font" ? "<br>본인이 사용할 권리가 있는 폰트만 업로드해 주세요." : ""}</p></section>`;
-        })
+      ["font", "sticker", "background"]
+        .map(
+          (kind) =>
+            `<section class="settings-card library-section" data-library="${kind}"></section>`,
+        )
         .join("") +
-      '<p class="inline-notice">라이브러리에서 숨겨도 예전 일기에 사용한 파일은 남아요.</p>';
-    content.querySelectorAll("[data-upload-kind]").forEach(
-      (btn) =>
-        (btn.onclick = () =>
-          busy(btn, async () => {
-            const kind = btn.dataset.uploadKind;
-            const files = await pickFiles(
-              kind === "font"
-                ? ".woff2,.woff,.ttf,.otf"
-                : kind === "sticker"
-                  ? "image/png,image/webp"
-                  : "image/jpeg,image/png,image/webp",
-            );
-            if (!files.length) return;
-            if (kind === "font") await uploadFont(ctx.repo, files[0]);
-            else await uploadImage(ctx.repo, files[0], kind);
-            toast("라이브러리에 등록했어요.");
-            await ctx.reload();
-          })),
-    );
-    content.querySelectorAll("[data-archive-asset]").forEach(
-      (btn) =>
-        (btn.onclick = () =>
-          busy(btn, async () => {
-            if (
-              !(await confirmAction(
-                "라이브러리에서 숨길까요?",
-                "이미 일기에 사용한 파일은 계속 표시돼요.",
-                "숨기기",
-              ))
-            )
-              return;
-            await ctx.repo.archiveAsset(btn.dataset.archiveAsset);
-            await ctx.reload();
-          })),
-    );
-    await hydrateAssets(content, ctx.repo);
+      '<p class="inline-notice">공유 자료는 초대된 친구들끼리 사용해요. 라이브러리에서 숨겨도 예전 일기의 꾸미기는 유지돼요.</p>';
+    for (const section of content.querySelectorAll("[data-library]"))
+      await mountLibrary(section, ctx, section.dataset.library);
     return;
   }
   if (section === "account") {

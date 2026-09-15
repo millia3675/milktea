@@ -122,7 +122,7 @@ export class CloudRepository {
         client
           .from("media_assets")
           .select("*")
-          .eq("owner_id", this.user.id)
+          .or(`owner_id.eq.${this.user.id},is_shared.eq.true`)
           .order("created_at")
           .order("id"),
       ),
@@ -284,7 +284,10 @@ export class CloudRepository {
         .single(),
     );
   }
-  async upload(blob, { kind, name, mime = blob.type, extension }) {
+  async upload(
+    blob,
+    { kind, name, mime = blob.type, extension, shared = false },
+  ) {
     const id = uuid();
     const bucket = {
       avatar: "avatars",
@@ -309,6 +312,8 @@ export class CloudRepository {
       name: name.slice(0, 100) || "첨부 파일",
       mime_type: mime,
       byte_size: blob.size,
+      is_shared:
+        shared === true && ["sticker", "background", "font"].includes(kind),
     };
     const response = await client
       .from("media_assets")
@@ -443,7 +448,9 @@ export class DemoRepository {
         .filter((x) => x.status === "published" || x.author_id === this.user.id)
         .map(({ document, ...entry }) => entry),
       reads: d.reads,
-      assets: d.assets.filter((x) => x.owner_id === this.user.id),
+      assets: d.assets.filter(
+        (x) => x.owner_id === this.user.id || x.is_shared,
+      ),
     });
   }
   async entries(ids) {
@@ -593,7 +600,10 @@ export class DemoRepository {
       return h;
     });
   }
-  async upload(blob, { kind, name, mime = blob.type, extension }) {
+  async upload(
+    blob,
+    { kind, name, mime = blob.type, extension, shared = false },
+  ) {
     const id = uuid();
     await putBlob(id, blob);
     const asset = {
@@ -603,6 +613,8 @@ export class DemoRepository {
       name: name.slice(0, 100) || "첨부 파일",
       mime_type: mime,
       byte_size: blob.size,
+      is_shared:
+        shared === true && ["sticker", "background", "font"].includes(kind),
       archived: false,
       created_at: new Date().toISOString(),
       object_path: `${this.user.id}/${id}.${extension}`,

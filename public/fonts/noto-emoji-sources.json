@@ -1,0 +1,149 @@
+[
+  {
+    "file": "NotoColorEmoji-colrv1.0.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.0.woff2",
+    "variant": "colrv1",
+    "sha256": "1ea085e149cb9e5f1ac086f0580f7dc10d6cc06cb2e29caa8a7360064a7eadd6",
+    "bytes": 709628
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.1.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.1.woff2",
+    "variant": "colrv1",
+    "sha256": "c87e948953bc90e38ba25d711f65377a62aef4e4a7cce272e1c6d8c315e4da41",
+    "bytes": 14812
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.2.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.2.woff2",
+    "variant": "colrv1",
+    "sha256": "d500497beb107cb122df6b65452c8bd9699c9078b9ae5f35bb82696a8cce6f60",
+    "bytes": 64244
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.3.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.3.woff2",
+    "variant": "colrv1",
+    "sha256": "33d863891fc666d3bcd03700f344ef50da89cf005b10d0022b5d196ac18b3596",
+    "bytes": 164600
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.4.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.4.woff2",
+    "variant": "colrv1",
+    "sha256": "f7848ab453b11441c20792f91c202ee98bcdcc223609e8cda6930d5f947c3d68",
+    "bytes": 99672
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.5.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.5.woff2",
+    "variant": "colrv1",
+    "sha256": "59ec028a34d2c3cb6e670d4fd231d7d61895b560738daa6ff4b956643ffe4aac",
+    "bytes": 118504
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.6.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.6.woff2",
+    "variant": "colrv1",
+    "sha256": "732541f93fcf33bb4919aa42f865f242a1d3f3428fd68c659774ad8bdefd5c87",
+    "bytes": 123212
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.7.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.7.woff2",
+    "variant": "colrv1",
+    "sha256": "d1f87d46c80af676a0099def081fffea41f85bc62dc0957405f2ff9a33f18c4d",
+    "bytes": 210912
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.8.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.8.woff2",
+    "variant": "colrv1",
+    "sha256": "2583da22e236b9b53d85d7a9dcb3f18cb4bca92277ea26cf53ada69c63ac8278",
+    "bytes": 414684
+  },
+  {
+    "file": "NotoColorEmoji-colrv1.9.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabsE4tq3luCC7p-aXxcn.9.woff2",
+    "variant": "colrv1",
+    "sha256": "a50590a80ba6589388f4a51d463f853ef382dcbeb1e3b022dc6ed60147676ca2",
+    "bytes": 137732
+  },
+  {
+    "file": "NotoColorEmoji-svg.0.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.0.woff2",
+    "variant": "svg",
+    "sha256": "82d4b636827a746c985905528178cb2de47fdf219eee17450dce045e5258ccfe",
+    "bytes": 1178096
+  },
+  {
+    "file": "NotoColorEmoji-svg.1.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.1.woff2",
+    "variant": "svg",
+    "sha256": "461b8c41dc24efe724dafe150d35a7e4c7dcd6a6109c004c61685425ad32b002",
+    "bytes": 33204
+  },
+  {
+    "file": "NotoColorEmoji-svg.2.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.2.woff2",
+    "variant": "svg",
+    "sha256": "39774470644052f40fd08a7a9409825201bc53746020d0420b3abfe2269884f1",
+    "bytes": 128232
+  },
+  {
+    "file": "NotoColorEmoji-svg.3.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.3.woff2",
+    "variant": "svg",
+    "sha256": "12ad0e9d719c2502354899e418e9c4f37bbce924ece4f3466db47758df39e889",
+    "bytes": 333008
+  },
+  {
+    "file": "NotoColorEmoji-svg.4.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.4.woff2",
+    "variant": "svg",
+    "sha256": "a877e597ad5430649c96a43f10d38d049aa105797d47bda3a358a04be14f8c8e",
+    "bytes": 215980
+  },
+  {
+    "file": "NotoColorEmoji-svg.5.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.5.woff2",
+    "variant": "svg",
+    "sha256": "6b4b4ad92ce2941212f41a95a1e27abec6ffafe556ff29496bf46b59133a565a",
+    "bytes": 249632
+  },
+  {
+    "file": "NotoColorEmoji-svg.6.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.6.woff2",
+    "variant": "svg",
+    "sha256": "b0fa9431065c258370e3e5ec96260d23bf0e62b939408fbdf47cf7f3d3b5b3a1",
+    "bytes": 285276
+  },
+  {
+    "file": "NotoColorEmoji-svg.7.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.7.woff2",
+    "variant": "svg",
+    "sha256": "a3652bbd0ecb0bb2184d0c21c70bc58d7ec268ab210c6a2e50a7478fa88d55df",
+    "bytes": 494360
+  },
+  {
+    "file": "NotoColorEmoji-svg.8.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.8.woff2",
+    "variant": "svg",
+    "sha256": "106ee15f23cbbed7e64f8cffc1882959125676c2e56afd317e70b77e74b40df7",
+    "bytes": 691624
+  },
+  {
+    "file": "NotoColorEmoji-svg.9.woff2",
+    "source": "https://fonts.gstatic.com/s/notocoloremoji/v40/Yq6P-KqIXTD0t4D9z1ESnKM3-HpFabts6diysYTngZPnMC1MfLd4hQ.9.woff2",
+    "variant": "svg",
+    "sha256": "330928d8c7b84d548d205d62cb458ccb5367b22064d15af22e75973a66b928b6",
+    "bytes": 285244
+  },
+  {
+    "file": "NotoColorEmoji-LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/LICENSE",
+    "variant": "license",
+    "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+    "bytes": 4301
+  }
+]
