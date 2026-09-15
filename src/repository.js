@@ -26,10 +26,16 @@ function isPublicKey(key) {
 export const configured =
   /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(config.url) &&
   isPublicKey(config.key);
+// Admin invitation emails return an implicit session; app-initiated resets use PKCE.
+const callbackHash = new URLSearchParams(window.location.hash.slice(1));
+const invitationCallback =
+  window.location.pathname.endsWith("/auth-callback.html") &&
+  callbackHash.has("access_token") &&
+  callbackHash.has("refresh_token");
 export const client = configured
   ? createClient(config.url, config.key, {
       auth: {
-        flowType: "pkce",
+        flowType: invitationCallback ? "implicit" : "pkce",
         detectSessionInUrl: true,
         persistSession: true,
         autoRefreshToken: true,
