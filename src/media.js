@@ -110,7 +110,10 @@ export async function uploadFont(repo, file, options) {
   } catch {
     throw userError("불러올 수 없는 폰트예요. 다른 파일을 선택해주세요.");
   }
-  return repo.upload(file, {
+  // Browser File.type can be empty or application/octet-stream for local fonts.
+  // Storage's multipart upload uses the Blob MIME, not its contentType option.
+  const font = file.slice(0, file.size, mimeByExt[ext]);
+  return repo.upload(font, {
     kind: "font",
     name: file.name.replace(/\.[^.]+$/, ""),
     mime: mimeByExt[ext],

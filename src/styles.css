@@ -1144,7 +1144,46 @@ h3 {
   padding-top: 13px;
 }
 .comment-row {
-  padding: 9px 0 13px;
+  padding: 9px 0 6px;
+  min-width: 0;
+  scroll-margin-block: 90px;
+}
+.comment-row:focus {
+  outline: 2px solid #8c9bc9;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.comment-thread + .comment-thread {
+  border-top: 1px solid #edf0f5;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.comment-replies > summary {
+  width: fit-content;
+  padding: 9px 4px;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #516599;
+}
+.comment-reply {
+  margin-left: calc(var(--reply-depth) * 12px);
+  border-left: 1px solid #dde2ee;
+  padding-left: 12px;
+}
+.comment-parent {
+  display: block;
+  max-width: 100%;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #576a97;
+  text-align: left;
+  overflow-wrap: anywhere;
+  padding: 5px 0;
+  margin: 0 0 3px;
+}
+.comment-parent.missing {
+  color: var(--reading-muted);
 }
 .comment-meta {
   display: flex;
@@ -1158,6 +1197,7 @@ h3 {
   align-items: center;
   gap: 7px;
   min-width: 0;
+  flex: 1;
 }
 .comment-author strong {
   font-weight: 600;
@@ -1171,17 +1211,24 @@ h3 {
   flex-shrink: 0;
   white-space: nowrap;
 }
-.comment-meta .comment-tools {
-  margin-left: auto;
+.comment-tools {
   display: flex;
-  gap: 7px;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+.comment-tool-spacer {
+  flex: 1;
 }
 .comment-tools button {
   font-size: 0.75rem;
   color: var(--reading-muted);
-  min-height: 30px;
-  padding: 0;
+  min-height: 36px;
+  min-width: 32px;
+  padding: 4px 0;
+}
+.comment-tools [data-reply-comment] {
+  color: #516599;
 }
 .comment-tools button:hover {
   color: #5d72b6;
@@ -1195,7 +1242,7 @@ h3 {
   line-height: 1.75;
 }
 .comment-photo {
-  max-width: 190px;
+  max-width: min(190px, 100%);
   max-height: 170px;
   border-radius: 8px;
   display: block;
@@ -1214,6 +1261,7 @@ h3 {
 }
 .comment-form textarea {
   flex: 1;
+  min-width: 0;
   border: 0;
   background: none;
   resize: vertical;
@@ -1239,6 +1287,31 @@ h3 {
   color: #4c619e;
   min-height: 40px;
   padding: 5px 8px;
+  flex-shrink: 0;
+}
+.comment-reply-target {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 7px 4px;
+  border-bottom: 1px solid #e1e5ef;
+  font-size: 0.78rem;
+  color: #516599;
+  overflow-wrap: anywhere;
+}
+.comment-reply-target > span {
+  flex: 1;
+  min-width: 0;
+}
+.comment-reply-target button {
+  flex-shrink: 0;
+  min-height: 36px;
+  color: #626f86;
+}
+.comment-attachment > span {
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .comment-attachment {
   width: 100%;

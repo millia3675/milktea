@@ -54,6 +54,8 @@ export function errorText(error) {
   map.ENTRY_CHANGED_OR_UNAVAILABLE =
     "다른 화면에서 수정된 일기예요. 작성한 내용을 복사한 뒤 다시 열어주세요.";
   Object.assign(map, {
+    COMMENT_PARENT_UNAVAILABLE: "답글을 달 댓글이 삭제되었어요. 작성한 내용을 확인하고 답글 취소 후 새 댓글로 남겨주세요.",
+    comments_parent_in_entry_fkey: "답글을 달 댓글이 삭제되었거나 사용할 수 없어요. 작성한 내용은 그대로 남아 있어요.",
     FUTURE_DIARY_DATE: "미래 날짜로는 쓸 수 없어요.",
     EMPTY_ENTRY: "내용이나 사진을 추가해주세요.",
     INVALID_MUSIC:

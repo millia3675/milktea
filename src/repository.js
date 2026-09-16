@@ -223,7 +223,7 @@ export class CloudRepository {
     );
     if (!data.length) throw new Error("FORBIDDEN");
   }
-  async saveComment({ id, entry_id, content, image_asset_id }) {
+  async saveComment({ id, entry_id, content, image_asset_id, parent_id = null }) {
     if (!content.trim() && !image_asset_id)
       throw userError("댓글이나 사진을 추가해주세요.");
     if (id) {
@@ -247,6 +247,7 @@ export class CloudRepository {
           author_id: this.user.id,
           content,
           image_asset_id,
+          parent_id,
         })
         .select()
         .single(),
@@ -552,11 +553,17 @@ export class DemoRepository {
         throw userError("댓글은 2,000자까지 쓸 수 있어요.");
       const old = d.comments.find((x) => x.id === comment.id);
       if (old) owned(old, this.user.id);
+      if (!old && comment.parent_id && !d.comments.some(
+        x => x.id === comment.parent_id && x.entry_id === comment.entry_id,
+      )) throw new Error("COMMENT_PARENT_UNAVAILABLE");
       const now = new Date().toISOString();
       const value = {
         ...comment,
         id: old?.id || uuid(),
         author_id: this.user.id,
+        entry_id: old?.entry_id || comment.entry_id,
+        parent_id: old ? old.parent_id || null : comment.parent_id || null,
+        parent_deleted: old?.parent_deleted || false,
         created_at: old?.created_at || now,
         updated_at: now,
       };
@@ -576,6 +583,10 @@ export class DemoRepository {
       )
         throw new Error("FORBIDDEN");
       d.comments = d.comments.filter((x) => x.id !== id);
+      for (const reply of d.comments) if (reply.parent_id === id) {
+        reply.parent_id = null;
+        reply.parent_deleted = true;
+      }
     });
   }
   async toggleReaction(entry_id, emoji, remove) {

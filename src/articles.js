@@ -4,6 +4,7 @@ import { formatDate, formatTime } from "./dates.js";
 import { safeColor } from "./validation.js";
 import { pickFiles, uploadImage, fontFamily } from "./media.js";
 import { musicHTML, bindMusicPlayers } from "./music-ui.js";
+import { commentThreads, compareComments } from "./comment-threads.js";
 export const emojis = ["👍", "❤️", "😂", "🐱", "✨", "🫂", "🍀", "🔥"];
 export function avatar(profile, size = "") {
   const label = profile?.nickname || "친구";
@@ -32,21 +33,24 @@ export function reactionHTML(entryId, reactions, me) {
   return `${[...counts.entries()].map(([emoji, v]) => `<button class="reaction ${v.mine ? "mine" : ""}" data-react="${e(emoji)}" data-entry="${e(entryId)}" aria-label="${e(emoji)} 반응 ${v.count}개${v.mine ? ", 내가 누름" : ""}" aria-pressed="${v.mine}">${e(emoji)} <span>${v.count}</span></button>`).join("")}<button class="reaction" data-reaction-picker="${e(entryId)}" aria-label="반응 추가">${icon("plus")}</button>`;
 }
 export function commentsHTML(entry, comments, ctx, detail = false) {
-  const all = comments
-    .filter((c) => c.entry_id === entry.id)
-    .sort(
-      (a, b) =>
-        a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
-    );
-  const visible = detail ? all : all.slice(-2);
-  return `${visible
-    .map((c) => {
-      const author = ctx.state.profiles.find((p) => p.id === c.author_id);
-      return `<div class="comment-row" data-comment="${e(c.id)}"><div class="comment-meta"><span class="comment-author">${avatar(author, "tiny")}<strong title="${e(author?.nickname || "친구")}">${e(author?.nickname || "친구")}</strong></span><time datetime="${e(c.created_at)}">${formatTime(c.created_at)}</time><div class="comment-tools">${c.author_id === ctx.me.id ? `<button data-edit-comment="${e(c.id)}">수정</button>` : ""}${c.author_id === ctx.me.id || entry.author_id === ctx.me.id ? `<button data-delete-comment="${e(c.id)}">삭제</button>` : ""}</div></div><p class="comment-text">${e(c.content)}</p>${c.image_asset_id ? `<button data-full-image="${e(c.image_asset_id)}" aria-label="댓글 사진 크게 보기"><img data-asset="${e(c.image_asset_id)}" class="comment-photo" alt="댓글에 첨부한 사진" hidden></button>` : ""}</div>`;
-    })
-    .join(
-      "",
-    )}${!detail && all.length > 2 ? `<a class="read-more" href="#/entries/${e(entry.id)}">댓글 ${all.length}개 모두 보기</a>` : ""}${entry.status === "published" ? `<form class="comment-form" data-comment-form="${e(entry.id)}"><textarea name="content" rows="1" maxlength="2000" placeholder="한마디 남기기…" aria-label="${e(entryTitle(entry))}에 댓글 남기기"></textarea><button type="button" class="icon-button" data-comment-photo aria-label="댓글 사진 첨부">${icon("image")}</button><button type="submit" class="comment-submit">등록</button><div class="comment-attachment" hidden></div></form>` : ""}`;
+  const threads = commentThreads(comments, entry.id);
+  const visible = detail ? threads : threads.slice().sort((a, b) => compareComments(a.latest, b.latest)).slice(-2);
+  const total = threads.reduce((n, thread) => n + 1 + thread.replies.length, 0);
+  const profile = id => ctx.state.profiles.find(p => p.id === id);
+  const row = (c, parent = null, depth = 0) => {
+    const author = profile(c.author_id);
+    const nickname = author?.nickname || "친구";
+    return `<div class="comment-row ${depth ? "comment-reply" : ""}" data-comment="${e(c.id)}" tabindex="-1" style="--reply-depth:${Math.min(depth, 2)}">
+      ${parent ? `<button class="comment-parent" data-jump-comment="${e(parent.id)}">${e(profile(parent.author_id)?.nickname || "친구")}님에게 답글</button>` : c.parent_deleted || c.parent_id ? `<p class="comment-parent missing">삭제된 댓글에 남긴 답글</p>` : ""}
+      <div class="comment-meta"><span class="comment-author">${avatar(author, "tiny")}<strong title="${e(nickname)}">${e(nickname)}</strong></span><time datetime="${e(c.created_at)}">${formatTime(c.created_at)}</time></div>
+      ${c.content ? `<p class="comment-text">${e(c.content)}</p>` : ""}
+      ${c.image_asset_id ? `<button data-full-image="${e(c.image_asset_id)}" aria-label="댓글 사진 크게 보기"><img data-asset="${e(c.image_asset_id)}" class="comment-photo" alt="댓글에 첨부한 사진" hidden></button>` : ""}
+      <div class="comment-tools">${entry.status === "published" ? `<button data-reply-comment="${e(c.id)}" aria-label="${e(nickname)}님의 댓글에 답글">답글</button>` : ""}<span class="comment-tool-spacer"></span>${c.author_id === ctx.me.id ? `<button data-edit-comment="${e(c.id)}">수정</button>` : ""}${c.author_id === ctx.me.id || entry.author_id === ctx.me.id ? `<button data-delete-comment="${e(c.id)}">삭제</button>` : ""}</div>
+    </div>`;
+  };
+  return `${visible.map(thread => `<section class="comment-thread" aria-label="${e(profile(thread.root.author_id)?.nickname || "친구")}님의 댓글과 답글">${row(thread.root)}${thread.replies.length ? `<details class="comment-replies" data-replies="${e(thread.root.id)}" ${detail ? "open" : ""}><summary>답글 ${thread.replies.length}개</summary>${thread.replies.map(({ comment, parent, depth }) => row(comment, parent, depth)).join("")}</details>` : ""}</section>`).join("")}
+    ${!detail && total > 2 ? `<a class="read-more" href="#/entries/${e(entry.id)}">댓글과 답글 ${total}개 모두 보기</a>` : ""}
+    ${entry.status === "published" ? `<form class="comment-form" data-comment-form="${e(entry.id)}"><div class="comment-reply-target" hidden aria-live="polite"></div><textarea name="content" rows="1" maxlength="2000" placeholder="한마디 남기기…" aria-label="${e(entryTitle(entry))}에 댓글 남기기"></textarea><button type="button" class="icon-button" data-comment-photo aria-label="댓글 사진 첨부">${icon("image")}</button><button type="submit" class="comment-submit">등록</button><div class="comment-attachment" hidden></div></form>` : ""}`;
 }
 export function articleHTML(
   entry,
@@ -139,8 +143,10 @@ export async function hydrateAssets(root, repo) {
         try {
           const assetId = paper.dataset.font;
           const family = await fontFamily(repo, assetId);
-          if (family && paper.isConnected && paper.dataset.font === assetId)
+          if (family && paper.isConnected && paper.dataset.font === assetId) {
             paper.style.fontFamily = `"Noto Color Emoji", "${family}", "Noto Color Emoji Keycaps", sans-serif`;
+            paper.dispatchEvent(new Event("papercontentchange"));
+          }
         } catch {}
       })(),
     );
@@ -150,21 +156,62 @@ export function bindArticles(root, ctx, loaded) {
   bindFixedPapers(root, loaded.entries, ctx.signal);
   bindMusicPlayers(root, ctx.signal);
   const pendingPhotos = new Map();
+  const pendingUploads = new Set();
   const getEntry = (id) => loaded.entries.find((x) => x.id === id);
-  const reloadComments = async (entryId) => {
+  const setReplyTarget = (form, commentId) => {
+    const target = form.querySelector(".comment-reply-target");
+    const comment = loaded.comments.find(c => c.id === commentId);
+    const name = ctx.state.profiles.find(p => p.id === comment?.author_id)?.nickname || "친구";
+    form.dataset.parentId = commentId || "";
+    target.hidden = !commentId;
+    target.innerHTML = commentId ? `<span>${comment ? `<strong>${e(name)}</strong>님에게 답글 작성 중` : "삭제된 댓글에 대한 답글이에요. 취소 후 새 댓글로 남겨주세요."}</span><button type="button" data-cancel-reply>답글 취소</button>` : "";
+    const input = form.elements.content;
+    input.placeholder = commentId ? "답글 남기기…" : "한마디 남기기…";
+    input.setAttribute("aria-label", commentId ? `${name}님에게 답글 남기기` : `${entryTitle(getEntry(form.dataset.commentForm))}에 댓글 남기기`);
+    form.querySelector("[type=submit]").textContent = commentId ? "답글 등록" : "등록";
+  };
+  const showAttachment = (form) => {
+    const a = pendingPhotos.get(form.dataset.commentForm);
+    const attachment = form.querySelector(".comment-attachment");
+    attachment.hidden = !a;
+    attachment.innerHTML = a ? `<img data-asset="${e(a.id)}" alt="첨부할 사진" hidden><span>${e(a.name)}</span><button type="button" aria-label="첨부 사진 제거" data-remove-comment-photo>${icon("close")}</button>` : "";
+  };
+  const revealComment = (card, id) => {
+    const row = card?.querySelector(`[data-comment="${id}"]`);
+    if (!row) return;
+    const replies = row.closest("details");
+    if (replies) replies.open = true;
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: "nearest" });
+  };
+  const reloadComments = async (entryId, { focusId } = {}) => {
     const data = await ctx.repo.entries([entryId]);
     loaded.comments = loaded.comments
       .filter((x) => x.entry_id !== entryId)
       .concat(data.comments);
     const card = root.querySelector(`[data-entry-card="${entryId}"]`);
     if (!card) return;
-    card.querySelector(".comments").innerHTML = commentsHTML(
+    const oldForm = card.querySelector("[data-comment-form]");
+    const draft = oldForm?.elements.content.value || "";
+    const parentId = oldForm?.dataset.parentId;
+    const openThreads = new Map([...card.querySelectorAll("[data-replies]")].map(el => [el.dataset.replies, el.open]));
+    const area = card.querySelector(".comments");
+    area.innerHTML = commentsHTML(
       getEntry(entryId),
       loaded.comments,
       ctx,
       card.dataset.detail === "true",
     );
-    await hydrateAssets(card, ctx.repo);
+    for (const el of area.querySelectorAll("[data-replies]"))
+      if (openThreads.has(el.dataset.replies)) el.open = openThreads.get(el.dataset.replies);
+    const form = area.querySelector("[data-comment-form]");
+    if (form) {
+      form.elements.content.value = draft;
+      setReplyTarget(form, parentId);
+      showAttachment(form);
+    }
+    await hydrateAssets(area, ctx.repo);
+    if (focusId) revealComment(card, focusId);
   };
   root.addEventListener(
     "submit",
@@ -173,16 +220,30 @@ export function bindArticles(root, ctx, loaded) {
       if (!form) return;
       event.preventDefault();
       const id = form.dataset.commentForm;
+      if (pendingUploads.has(id)) return toast("사진을 첨부하고 있어요. 잠시 후 등록해주세요.");
       const button = form.querySelector("[type=submit]");
       busy(button, async () => {
-        await ctx.repo.saveComment({
-          entry_id: id,
-          content: form.elements.content.value.trim(),
-          image_asset_id: pendingPhotos.get(id)?.id || null,
-        });
-        pendingPhotos.delete(id);
-        await reloadComments(id);
-        toast("댓글을 남겼어요.");
+        const parentId = form.dataset.parentId || null;
+        form.dataset.saving = "true";
+        form.elements.content.readOnly = true;
+        try {
+          const saved = await ctx.repo.saveComment({
+            entry_id: id,
+            parent_id: parentId,
+            content: form.elements.content.value.trim(),
+            image_asset_id: pendingPhotos.get(id)?.id || null,
+          });
+          pendingPhotos.delete(id);
+          form.elements.content.value = "";
+          setReplyTarget(form, null);
+          showAttachment(form);
+          toast(parentId ? "답글을 남겼어요." : "댓글을 남겼어요.");
+          try { await reloadComments(id, { focusId: saved.id }); }
+          catch { toast("저장은 완료했어요. 새로고침하면 남긴 글을 볼 수 있어요."); }
+        } finally {
+          delete form.dataset.saving;
+          form.elements.content.readOnly = false;
+        }
       });
     },
     { signal: ctx.signal },
@@ -192,17 +253,38 @@ export function bindArticles(root, ctx, loaded) {
     (event) => {
       const btn = event.target.closest("button");
       if (!btn) return;
+      if (btn.closest("[data-comment-form]")?.dataset.saving) return;
+      if (btn.dataset.replyComment) {
+        const card = btn.closest("[data-entry-card]");
+        const form = card.querySelector("[data-comment-form]");
+        if (!form || form.dataset.saving) return;
+        setReplyTarget(form, btn.dataset.replyComment);
+        form.elements.content.focus({ preventScroll: true });
+        form.scrollIntoView({ block: "nearest" });
+      }
+      if (btn.hasAttribute("data-cancel-reply")) {
+        const form = btn.closest("form");
+        setReplyTarget(form, null);
+        form.elements.content.focus();
+      }
+      if (btn.dataset.jumpComment) revealComment(btn.closest("[data-entry-card]"), btn.dataset.jumpComment);
       if (btn.hasAttribute("data-comment-photo"))
         busy(btn, async () => {
-          const files = await pickFiles("image/jpeg,image/png,image/webp");
-          if (!files.length) return;
           const form = btn.closest("form");
-          const a = await uploadImage(ctx.repo, files[0], "comment-image");
-          pendingPhotos.set(form.dataset.commentForm, a);
-          const attachment = form.querySelector(".comment-attachment");
-          attachment.hidden = false;
-          attachment.innerHTML = `<img data-asset="${e(a.id)}" alt="첨부할 사진" hidden><span>${e(a.name)}</span><button type="button" aria-label="첨부 사진 제거" data-remove-comment-photo>${icon("close")}</button>`;
-          await hydrateAssets(attachment, ctx.repo);
+          const id = form.dataset.commentForm;
+          if (pendingUploads.has(id)) return;
+          pendingUploads.add(id);
+          try {
+            const files = await pickFiles("image/jpeg,image/png,image/webp");
+            if (!files.length) return;
+            const a = await uploadImage(ctx.repo, files[0], "comment-image");
+            pendingPhotos.set(id, a);
+            const current = root.querySelector(`[data-comment-form="${id}"]`);
+            if (current) {
+              showAttachment(current);
+              await hydrateAssets(current.querySelector(".comment-attachment"), ctx.repo);
+            }
+          } finally { pendingUploads.delete(id); }
         });
       if (btn.hasAttribute("data-remove-comment-photo")) {
         const form = btn.closest("form");
@@ -311,7 +393,7 @@ export function bindArticles(root, ctx, loaded) {
           if (
             !(await confirmAction(
               "댓글을 삭제할까요?",
-              "삭제한 댓글은 되돌릴 수 없어요.",
+              "이 댓글은 삭제되고 달린 답글은 남아요. 삭제한 내용은 되돌릴 수 없어요.",
             ))
           )
             return;

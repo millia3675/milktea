@@ -27,23 +27,79 @@ export function blockHeight(layout, id) {
   return Number.isFinite(value) && value >= 0 && value <= 200000 ? value : 0;
 }
 
-export function fitPaper(viewport, paper, layout, { signal, measure } = {}) {
+// Crop only the reading window. Keep the original sheet width, wrapping and
+// sticker coordinate system, so opening/editing the diary never moves content.
+export function readingBounds(paper, layout) {
+  const full = { width: layout.width, height: paper.offsetHeight };
+  const images = [...paper.querySelectorAll("img[data-asset]")];
+  if (images.some(img => !img.getAttribute("src") || !img.complete)) return full;
+  const origin = paper.getBoundingClientRect();
+  const scale = origin.width / layout.width;
+  if (!scale) return full;
+  let right = 0, bottom = 0;
+  const include = rect => {
+    if (!rect.width || !rect.height) return;
+    right = Math.max(right, (rect.right - origin.left) / scale);
+    bottom = Math.max(bottom, (rect.bottom - origin.top) / scale);
+  };
+  for (const text of paper.querySelectorAll(".blocks p, .photo-caption")) {
+    if (!text.textContent.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    for (const rect of range.getClientRects()) include(rect);
+  }
+  for (const node of paper.querySelectorAll(".entry-photo, .placed-sticker"))
+    include(node.getBoundingClientRect());
+  if (!right || !bottom) return full;
+  return {
+    width: Math.min(full.width, Math.max(240, Math.ceil(right + 20))),
+    height: Math.min(full.height, Math.max(100, Math.ceil(bottom + 20))),
+  };
+}
+
+export function fitPaper(viewport, paper, layout, { signal, measure, crop = false } = {}) {
   paper.classList.add("fixed-paper");
   paper.style.width = `${layout.width}px`;
-  let active = true;
+  let active = true, scheduled = 0;
   const refresh = () => {
     if (!active || !paper.isConnected) return;
     measure?.();
     paper.style.minHeight = `${layout.height}px`;
-    const scale = Math.min(1, viewport.clientWidth / layout.width);
+    const bounds = crop ? readingBounds(paper, layout) : { width: layout.width, height: paper.offsetHeight };
+    const scale = Math.min(1, viewport.clientWidth / bounds.width);
     paper.style.transform = `scale(${scale})`;
     paper.style.setProperty("--paper-scale", scale);
-    viewport.style.height = `${paper.offsetHeight * scale}px`;
+    viewport.style.height = `${bounds.height * scale}px`;
+    if (crop) {
+      // Clip the blank right edge even when the sheet fits without scaling.
+      paper.style.clipPath = `inset(0 ${Math.max(0, layout.width - bounds.width)}px ${Math.max(0, paper.offsetHeight - bounds.height)}px 0 round 8px)`;
+      viewport.dataset.readingWidth = bounds.width;
+      viewport.dataset.readingHeight = bounds.height;
+    }
+  };
+  const schedule = () => {
+    if (!active || scheduled) return;
+    scheduled = requestAnimationFrame(() => { scheduled = 0; refresh(); });
   };
   const observer = new ResizeObserver(refresh);
   observer.observe(viewport);
   observer.observe(paper);
-  const destroy = () => { active = false; observer.disconnect(); };
+  if (crop) {
+    paper.addEventListener("load", schedule, true);
+    paper.addEventListener("error", schedule, true);
+    paper.addEventListener("papercontentchange", schedule);
+    document.fonts?.addEventListener("loadingdone", schedule);
+    document.fonts?.ready.then(schedule);
+  }
+  const destroy = () => {
+    active = false;
+    observer.disconnect();
+    cancelAnimationFrame(scheduled);
+    paper.removeEventListener("load", schedule, true);
+    paper.removeEventListener("error", schedule, true);
+    paper.removeEventListener("papercontentchange", schedule);
+    document.fonts?.removeEventListener("loadingdone", schedule);
+  };
   signal?.addEventListener("abort", destroy, { once: true });
   refresh();
   return { refresh, destroy };
@@ -55,6 +111,6 @@ export function bindFixedPapers(root, entries, signal) {
     if (!layout) continue;
     const card = root.querySelector(`[data-entry-card="${entry.id}"]`);
     const viewport = card?.querySelector(".paper-viewport");
-    if (viewport) fitPaper(viewport, viewport.querySelector(".paper"), layout, { signal });
+    if (viewport) fitPaper(viewport, viewport.querySelector(".paper"), layout, { signal, crop: true });
   }
 }
