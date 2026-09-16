@@ -1,0 +1,24 @@
+.account-deletion-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line, #e2e6ee);
+}
+.account-deletion-section h2 { font-size: 1.125rem; }
+.account-deletion-section p { max-width: 54ch; }
+.account-deletion-dialog { width: min(560px, calc(100vw - 32px)); }
+.account-deletion-dialog p, .deletion-details { line-height: 1.65; }
+.deletion-details { padding-left: 22px; margin: 16px 0 24px; }
+.deletion-details li + li { margin-top: 8px; }
+.account-deletion-dialog .field-help { margin: 0 0 8px; color: #596780; }
+.account-deletion-dialog .dialog-actions { flex-wrap: wrap; }
+.account-deletion-dialog .dialog-actions .button { min-height: 44px; }
+.account-deletion-dialog .form-field input { min-width: 0; width: 100%; }
+.account-deletion-section .danger, .account-deletion-dialog .danger {
+  background: #a63643;
+  color: #fff;
+}
+.account-deletion-section .danger:hover, .account-deletion-dialog .danger:hover { background: #892c37; }
+@media (max-width: 420px) {
+  .account-deletion-dialog .dialog-actions { flex-direction: column-reverse; }
+  .account-deletion-dialog .dialog-actions .button { width: 100%; }
+}

@@ -225,7 +225,21 @@ async function render() {
   } catch (error) {
     if (version !== renderVersion) return;
     console.error(error);
-    if (error.message.includes("MEMBER_REQUIRED")) {
+    if (error.message === "SESSION_ENDED") {
+      me = null;
+      renderLogin();
+    } else if (error.message === "ACCOUNT_DELETION_PENDING") {
+      app.innerHTML = `<main class="login-page"><section class="login-card"><div class="login-brand">밀크티</div><h2>계정 삭제를 마쳐주세요</h2><p>삭제가 시작되어 일기장 접근이 차단됐어요. 일부 자료가 남아 있을 수 있으니 아래 버튼으로 삭제를 마저 진행해주세요.</p><button class="button" id="resume-account-deletion">삭제 마저 진행하기</button><button class="text-button" id="pending-logout">로그아웃</button></section></main>`;
+      app.querySelector("#resume-account-deletion").onclick = async () => {
+        const { openAccountDeletion } = await import("./account-deletion.js");
+        openAccountDeletion(repo, me.email, render);
+      };
+      app.querySelector("#pending-logout").onclick = () => busy(app.querySelector("#pending-logout"), async () => {
+        await repo.logout();
+        me = null;
+        renderLogin();
+      });
+    } else if (error.message.includes("MEMBER_REQUIRED")) {
       app.innerHTML = `<div class="login-page"><div class="login-card"><div class="login-brand">밀크티</div><h2>이용 승인을 기다리고 있어요</h2><p>로그인은 되었어요. 모임 운영자가 계정을 승인하면 일기장을 열 수 있습니다.</p><button class="button" id="retry-member">다시 확인</button><button class="text-button" id="member-logout">로그아웃</button></div></div>`;
       app.querySelector("#retry-member").onclick = render;
       app.querySelector("#member-logout").onclick = () =>
@@ -310,6 +324,10 @@ function renderLogin() {
       if (location.hash === "#/home") await render();
       else await go("#/home");
     });
+  if (params.get("account") === "deleted") {
+    app.querySelector(".login-brand").insertAdjacentHTML("afterend",
+      '<p class="inline-notice" role="status">계정과 기록이 삭제되었어요.</p>');
+  }
   app.querySelector("#setup-help")?.addEventListener("click", setupHelp);
   app.querySelector("#login-form")?.addEventListener("submit", (event) => {
     event.preventDefault();

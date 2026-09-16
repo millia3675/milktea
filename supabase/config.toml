@@ -12,3 +12,8 @@ minimum_password_length = 12
 # Keep email/password login enabled; auth.enable_signup above blocks public signup.
 enable_signup = true
 enable_confirmations = true
+
+[functions.delete-account]
+# The handler validates the user's bearer token with Auth getUser and rechecks the password.
+# Do not rely on the gateway's legacy JWT/API-key check for authorization.
+verify_jwt = false

@@ -78,6 +78,24 @@ export class CloudRepository {
     this.user = null;
     this.clearURLs();
   }
+  async deleteAccount(password, confirmation) {
+    const { data, error } = await client.functions.invoke("delete-account", {
+      // Bind the confirmation screen to its account even if another tab changes the session.
+      body: { password, confirmation, expected_user_id: this.user.id },
+    });
+    if (error) {
+      let details;
+      try { details = await error.context?.json(); } catch { /* Network or gateway error. */ }
+      const failure = userError(details?.message ||
+        "연결 문제로 삭제 완료 여부를 확인하지 못했어요. 잠시 후 다시 시도하거나 새로고침해 계정 상태를 확인해주세요.");
+      failure.code = details?.code;
+      throw failure;
+    }
+    if (!data?.deleted) throw userError("삭제가 완료되지 않았어요. 잠시 후 다시 시도해주세요.");
+    await client.auth.signOut({ scope: "local" });
+    this.user = null;
+    this.clearURLs();
+  }
   clearURLs() {
     for (const value of this.cache.values()) URL.revokeObjectURL(value);
     this.cache.clear();
@@ -90,7 +108,16 @@ export class CloudRepository {
         .eq("id", this.user.id)
         .maybeSingle(),
     );
-    if (!member?.active) throw new Error("MEMBER_REQUIRED");
+    if (!member?.active) {
+      if (check(await client.rpc("account_deletion_pending")))
+        throw new Error("ACCOUNT_DELETION_PENDING");
+      const { data, error } = await client.auth.getUser();
+      if (!data?.user && [401, 403, 404].includes(error?.status)) {
+        await client.auth.signOut({ scope: "local" });
+        throw new Error("SESSION_ENDED");
+      }
+      throw new Error("MEMBER_REQUIRED");
+    }
     const values = await Promise.all([
       all(() =>
         client.from("profiles").select("*").order("created_at").order("id"),

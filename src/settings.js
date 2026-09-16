@@ -8,6 +8,7 @@ import { avatar, hydrateAssets } from "./articles.js";
 import { pickFiles, uploadImage, readImage } from "./media.js";
 import { drawAvatar } from "./avatar-crop.js";
 import { client } from "./repository.js";
+import { openAccountDeletion } from "./account-deletion.js";
 const colors = [
   "#6C80D9",
   "#A18BCC",
@@ -301,5 +302,8 @@ export async function settingsPage(root, ctx, section) {
         toast("비밀번호를 변경했어요.");
       });
     };
+    content.insertAdjacentHTML("beforeend", `<section class="account-deletion-section"><h2>계정 삭제</h2><p class="muted">계정과 함께 내 일기, 댓글, 업로드 자료를 영구 삭제해요. 삭제할 내용을 확인한 뒤 진행할 수 있어요.</p><button class="button danger" id="open-account-deletion">계정 삭제 안내</button></section>`);
+    content.querySelector("#open-account-deletion").onclick = () =>
+      openAccountDeletion(ctx.repo, ctx.me.email, ctx.reload);
   }
 }

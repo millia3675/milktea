@@ -50,9 +50,9 @@ npm run preview
 
 ## Supabase 연결
 
-현재 프로젝트에는 아래 초기화와 인증 설정을 적용했습니다. 데이터베이스 마이그레이션 5개와 비공개 버킷 5개가 준비되어 있습니다. 다음 절차는 다른 프로젝트에 설치하거나 친구를 추가할 때 참고합니다.
+현재 프로젝트에는 아래 초기화와 인증 설정을 적용했습니다. 데이터베이스 마이그레이션 6개와 비공개 버킷 5개가 준비되어 있습니다. 다음 절차는 다른 프로젝트에 설치하거나 친구를 추가할 때 참고합니다.
 
-1. 새 프로젝트를 만들고 `supabase/migrations/`의 SQL 5개를 파일명 순서대로 SQL Editor에서 postgres 권한으로 각각 한 번 실행합니다. 이미 적용한 파일은 반복하지 않고 남은 파일만 실행합니다. 마지막 `202609160005_asset_insert_read.sql`은 파일 등록 직후 반환되는 행을 소유자가 읽을 수 있도록 권한 검사를 수정합니다. 기존 데이터베이스를 덮어쓰는 스크립트가 아닙니다.
+1. 새 프로젝트를 만들고 `supabase/migrations/`의 SQL 6개를 파일명 순서대로 SQL Editor에서 postgres 권한으로 각각 한 번 실행합니다. 이미 적용한 파일은 반복하지 않고 남은 파일만 실행합니다. 5번은 파일 등록 직후 읽기 권한, 6번은 본인 계정 삭제를 지원합니다. 기존 데이터를 지우는 초기화 스크립트가 아닙니다.
 2. Auth 일반 설정에서 신규 회원가입과 anonymous sign-in을 비활성화하되, 이메일 로그인 제공자는 활성화합니다. CLI에서는 `[auth].enable_signup=false`, `[auth.email].enable_signup=true`를 사용합니다.
 3. `public/config.js`의 supabaseUrl과 publishableKey를 채웁니다. 또는 `.env.example`을 `.env.local`로 복사해 같은 두 값을 설정합니다.
 4. Auth URL Configuration의 Site URL을 `https://millia3675.github.io/milktea/`로 지정합니다. Redirect URLs에 `https://millia3675.github.io/milktea/auth-callback.html`을 추가합니다.
@@ -94,6 +94,26 @@ where id='00000000-0000-4000-8000-000000000001';
 제공한 `.github/workflows/pages.yml`은 main에 push할 때 테스트·빌드한 뒤 Pages에 배포합니다. 저장소의 Settings → Pages → Source를 GitHub Actions로 지정합니다. Vite base를 상대 경로로 설정하여 프로젝트 사이트의 하위 경로를 지원합니다.
 
 `public/config.js` 변경 뒤 push하면 연결 설정도 배포됩니다. 공개할 수 있는 URL과 publishable key만 넣으므로 빌드 결과에 포함됩니다. 로그인 화면과 앱 코드는 공개되어도, 일기와 private 버킷 파일은 승인된 사용자만 읽도록 DB에서 검사합니다.
+
+## 계정 삭제
+
+설정 → 계정 → ‘계정 삭제 안내’에서 삭제 범위를 확인합니다. 현재 비밀번호와 `계정 삭제` 문구를 입력하고 ‘계정과 기록 영구 삭제’를 눌러야 실행됩니다. 체험 모드에는 실제 계정 삭제를 제공하지 않습니다.
+
+- 본인의 일기·임시저장·댓글·반응·읽음 기록·생활 기록·프로필·설정·업로드 파일과 로그인 계정을 삭제합니다. 본인 일기에 달린 친구 댓글도 함께 삭제됩니다. 취소와 복구를 제공하지 않으며 재가입은 새 초대가 필요합니다.
+- 친구 일기에서 본인이 올린 공유 스티커·배경·폰트만 제거합니다. 친구의 글·사진·음악·고정 종이 정보와 다른 자료는 보존합니다. 삭제한 공유 배경·폰트를 기본값으로 쓰던 친구의 설정은 기본 종이·글씨체로 돌아갑니다. 해당 일기의 버전을 갱신해 열린 편집기의 오래된 저장을 거부합니다.
+- 서버가 실제 로그인과 현재 비밀번호를 확인하고, 확인 화면의 계정 ID도 비교합니다. 브라우저는 다른 사람의 계정을 삭제할 수 없고 관리자 키를 갖지 않습니다. 먼저 멤버 접근을 차단해 기존 JWT의 일기·파일 접근을 막습니다.
+- Storage API로 등록된 파일과 등록 실패로 남은 업로드까지 삭제한 뒤, DB 기록과 참조를 하나의 트랜잭션으로 정리하고 Auth 계정을 마지막에 삭제합니다. Storage 메타데이터만 SQL로 지우지 않습니다.
+- 연결·서버 오류로 중단된 작업은 비공개 삭제 상태에 남습니다. 이때 계정 접근은 차단되며 일부 자료가 이미 삭제됐을 수 있습니다. 다시 로그인하면 ‘삭제 마저 진행하기’가 나타나고, 비밀번호 확인 후 남은 정리를 재시도합니다. 예약된 자동 재시도 작업은 없습니다.
+
+다른 Supabase 프로젝트에 설치할 때는 SQL 6개 적용 후 아래 서버 함수를 배포합니다. GitHub Pages 배포는 서버 함수 배포를 대신하지 않습니다. 다른 사이트 주소를 사용할 경우 `handler.js`의 허용 Origin도 변경합니다.
+
+```sh
+npx supabase functions deploy delete-account --project-ref YOUR_PROJECT_REF --use-api
+```
+
+함수는 Supabase가 제공하는 서버 환경변수를 사용합니다. `verify_jwt=false`는 함수 내부의 `getUser` 검증과 비밀번호 확인으로 인증한다는 뜻이며, 삭제용 RPC는 `service_role`에만 허용됩니다. 비밀번호와 토큰은 애플리케이션 로그나 작업 테이블에 저장하지 않습니다.
+
+공식 참고: [계정 삭제와 기존 JWT·Storage 소유권](https://supabase.com/docs/guides/auth/managing-user-data), [서버의 사용자 삭제 API](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser), [Storage 파일 삭제](https://supabase.com/docs/guides/storage/management/delete-objects).
 
 ## 데이터와 권한
 
