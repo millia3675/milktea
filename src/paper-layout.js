@@ -29,10 +29,26 @@ export function blockHeight(layout, id) {
 
 // Crop only the reading window. Keep the original sheet width, wrapping and
 // sticker coordinate system, so opening/editing the diary never moves content.
+const photoStyles = new WeakMap();
+const blockStyles = new WeakMap();
+const ceilPixel = value => Math.ceil(value - 0.001);
 export function readingBounds(paper, layout) {
-  const full = { width: layout.width, height: paper.offsetHeight };
   const images = [...paper.querySelectorAll("img[data-asset]")];
-  if (images.some(img => !img.getAttribute("src") || !img.complete)) return full;
+  if (images.some(img => !img.getAttribute("src") || !img.complete))
+    return { width: layout.width, height: paper.offsetHeight };
+  const photos = [...paper.querySelectorAll(".entry-photo")];
+  // Re-measure the original sheet after a font/image load or a viewport change.
+  // A narrower photo must not pull later blocks or their stickers upwards.
+  for (const photo of photos) {
+    if (!photoStyles.has(photo)) photoStyles.set(photo, photo.style.width);
+    photo.style.width = photoStyles.get(photo);
+    const block = photo.closest(".fixed-block");
+    if (block) {
+      if (!blockStyles.has(block)) blockStyles.set(block, block.style.minHeight);
+      block.style.minHeight = blockStyles.get(block);
+    }
+  }
+  const full = { width: layout.width, height: paper.offsetHeight };
   const origin = paper.getBoundingClientRect();
   const scale = origin.width / layout.width;
   if (!scale) return full;
@@ -42,18 +58,37 @@ export function readingBounds(paper, layout) {
     right = Math.max(right, (rect.right - origin.left) / scale);
     bottom = Math.max(bottom, (rect.bottom - origin.top) / scale);
   };
+  let hasBodyText = false;
   for (const text of paper.querySelectorAll(".blocks p, .photo-caption")) {
     if (!text.textContent.trim()) continue;
+    hasBodyText ||= text.matches(".blocks p");
     const range = document.createRange();
     range.selectNodeContents(text);
     for (const rect of range.getClientRects()) include(rect);
   }
-  for (const node of paper.querySelectorAll(".entry-photo, .placed-sticker"))
-    include(node.getBoundingClientRect());
+  const stickers = [...paper.querySelectorAll(".placed-sticker")].map(node => node.getBoundingClientRect());
+  for (const rect of stickers) include(rect);
+  const photoWidth = Math.min(layout.width, Math.max(220, ceilPixel(right)));
+  const photoFrames = photos.map(photo => ({
+    photo, rect: photo.getBoundingClientRect(), block: photo.closest(".fixed-block"),
+  }));
+  // Full-width photo buttons used to force the whole diary (including short text)
+  // to shrink. Fit undecorated photos to the visible writing; never resize a photo
+  // under a sticker, and leave photo-only diaries at their original width.
+  if (hasBodyText || stickers.length) {
+    for (const { photo, rect, block } of photoFrames) {
+      const decorated = stickers.some(s =>
+        s.left < rect.right && s.right > rect.left && s.top < rect.bottom && s.bottom > rect.top);
+      if (decorated || photoWidth >= rect.width / scale) continue;
+      if (block) block.style.minHeight = `${block.offsetHeight}px`;
+      photo.style.width = `${photoWidth}px`;
+    }
+  }
+  for (const photo of photos) include(photo.getBoundingClientRect());
   if (!right || !bottom) return full;
   return {
-    width: Math.min(full.width, Math.max(240, Math.ceil(right + 20))),
-    height: Math.min(full.height, Math.max(100, Math.ceil(bottom + 20))),
+    width: Math.min(full.width, Math.max(240, ceilPixel(right + 20))),
+    height: Math.min(full.height, Math.max(100, ceilPixel(bottom + 20))),
   };
 }
 
