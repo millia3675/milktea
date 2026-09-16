@@ -687,26 +687,23 @@ h3 {
   color: var(--reading-secondary);
 }
 .home-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  align-items: start;
-  gap: 32px;
+  min-width: 0;
 }
 .home-stream {
   min-width: 0;
 }
 .home-stream .diary-grid {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 28px;
-}
-.home-calendar {
-  position: sticky;
-  top: 24px;
-  border-top: 1px solid var(--reading-line);
-  padding-top: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
 }
 .home-mobile-calendar {
-  display: none;
+  display: block;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--reading-line);
+}
+.home-mobile-calendar .calendar {
+  max-width: 420px;
+  margin: 12px auto 20px;
 }
 .home-mobile-calendar > summary {
   display: flex;
@@ -734,21 +731,9 @@ h3 {
   outline-offset: 3px;
   border-radius: 4px;
 }
-@media (max-width: 1279px) {
-  .home-layout {
+@media (max-width: 1023px) {
+  .home-stream .diary-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .home-calendar {
-    display: none;
-  }
-  .home-mobile-calendar {
-    display: block;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--reading-line);
-  }
-  .home-mobile-calendar .calendar {
-    max-width: 420px;
-    margin: 12px auto 20px;
   }
 }
 .calendar {

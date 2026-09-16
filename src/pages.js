@@ -110,7 +110,7 @@ export async function homePage(root, ctx, params) {
         ? `<a class="button" href="#/write?date=${date}">${icon("plus")} 일기 쓰기</a>`
         : "",
     ) +
-    `<details class="home-mobile-calendar" ${params.get("calendar") === "1" ? "open" : ""}><summary>${icon("calendar")}<span>월별로 보기</span>${icon("chevron")}</summary>${calendarHTML(date, ctx.state.entries, ctx.me.id, true)}</details><div class="home-layout"><section class="home-stream" aria-label="선택한 날짜의 일기"><div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div></section><aside class="home-calendar" aria-label="월별 일기 찾아보기">${calendarHTML(date, ctx.state.entries, ctx.me.id)}</aside></div></div>`;
+    `<details class="home-mobile-calendar" ${params.get("calendar") === "1" ? "open" : ""}><summary>${icon("calendar")}<span>월별로 보기</span>${icon("chevron")}</summary>${calendarHTML(date, ctx.state.entries, ctx.me.id, true)}</details><div class="home-layout"><section class="home-stream" aria-label="선택한 날짜의 일기"><div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div></section></div></div>`;
   const mobileCalendar = root.querySelector(".home-mobile-calendar");
   mobileCalendar.addEventListener(
     "click",
