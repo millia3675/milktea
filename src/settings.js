@@ -3,9 +3,10 @@ import {
   fontOptions,
   builtinPapers,
 } from "./decoration-library.js";
-import { e, icon, busy, toast, modal, confirmAction, userError } from "./ui.js";
+import { e, icon, busy, toast, modal, confirmAction, userError, errorText } from "./ui.js";
 import { avatar, hydrateAssets } from "./articles.js";
-import { pickFiles, uploadImage } from "./media.js";
+import { pickFiles, uploadImage, readImage } from "./media.js";
+import { drawAvatar } from "./avatar-crop.js";
 import { client } from "./repository.js";
 const colors = [
   "#6C80D9",
@@ -27,35 +28,54 @@ function colorField(label, key, value, choices) {
   return `<div class="form-field"><label for="${key}">${label}</label><div class="color-swatches">${choices.map((c) => `<button type="button" class="color-choice ${c.toLowerCase() === value.toLowerCase() ? "selected" : ""}" style="--color:${c}" data-color-target="${key}" data-color="${c}" aria-label="${label} ${c}" aria-pressed="${c.toLowerCase() === value.toLowerCase()}"></button>`).join("")}<label class="custom-color-label" for="${key}">직접 선택 <input type="color" id="${key}" name="${key}" value="${e(value)}"></label></div></div>`;
 }
 async function cropAvatar(repo, file) {
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
-    throw userError("JPG, PNG, WebP 사진을 선택해주세요.");
-  const url = URL.createObjectURL(file);
+  const bitmap = await readImage(file, "avatar");
   return new Promise((resolve) => {
     let completed = false;
     const finish = (value) => {
       if (completed) return;
       completed = true;
-      URL.revokeObjectURL(url);
+      bitmap.close();
       resolve(value);
     };
     const d = modal(
-      `<h2>프로필 사진 자르기</h2><p class="muted">원 안에 보일 부분을 맞춰주세요.</p><div class="crop-preview"><img src="${e(url)}" alt="프로필 사진 자르기 미리보기" id="crop-photo"></div><div class="crop-controls"><label>가로 위치<input id="crop-x" type="range" min="0" max="1" step="0.01" value="0.5"></label><label>세로 위치<input id="crop-y" type="range" min="0" max="1" step="0.01" value="0.5"></label></div><div class="dialog-actions"><button class="button" id="crop-save">이 사진 사용</button></div>`,
+      `<h2>프로필 사진 맞추기</h2><p class="muted">크기와 위치를 조절해 원 안에 맞춰주세요.</p><div class="crop-preview"><canvas width="512" height="512" role="img" aria-label="저장될 프로필 사진 미리보기" id="crop-photo"></canvas></div><div class="crop-controls"><label for="crop-zoom">사진 크기 <output id="crop-zoom-value" for="crop-zoom">100%</output></label><div class="crop-zoom-row"><button type="button" id="crop-zoom-out" aria-label="사진 축소">−</button><input id="crop-zoom" type="range" min="1" max="4" step="0.1" value="1"><button type="button" id="crop-zoom-in" aria-label="사진 확대">+</button></div><label>가로 위치<input id="crop-x" type="range" min="0" max="1" step="0.01" value="0.5"></label><label>세로 위치<input id="crop-y" type="range" min="0" max="1" step="0.01" value="0.5"></label></div><p class="inline-error" id="crop-error" role="alert" hidden></p><div class="dialog-actions"><button type="button" class="button secondary" id="crop-reset">처음으로</button><button class="button" id="crop-save">이 사진 사용</button></div>`,
     );
-    d.querySelectorAll("input").forEach(
-      (input) =>
-        (input.oninput = () => {
-          d.querySelector("#crop-photo").style.objectPosition =
-            `${Number(d.querySelector("#crop-x").value) * 100}% ${Number(d.querySelector("#crop-y").value) * 100}%`;
-        }),
-    );
+    const options = () => ({
+      x: Number(d.querySelector("#crop-x").value),
+      y: Number(d.querySelector("#crop-y").value),
+      zoom: Number(d.querySelector("#crop-zoom").value),
+    });
+    const preview = () => {
+      drawAvatar(d.querySelector("#crop-photo"), bitmap, options());
+      const zoom = options().zoom;
+      d.querySelector("#crop-zoom-value").value = `${Math.round(zoom * 100)}%`;
+      d.querySelector("#crop-zoom-out").disabled = zoom <= 1;
+      d.querySelector("#crop-zoom-in").disabled = zoom >= 4;
+    };
+    d.querySelectorAll("input").forEach(input => input.oninput = preview);
+    for (const [id, delta] of [["crop-zoom-out", -0.1], ["crop-zoom-in", 0.1]])
+      d.querySelector(`#${id}`).onclick = () => {
+        d.querySelector("#crop-zoom").value = String(options().zoom + delta);
+        preview();
+      };
+    d.querySelector("#crop-reset").onclick = () => {
+      d.querySelector("#crop-zoom").value = "1";
+      d.querySelector("#crop-x").value = d.querySelector("#crop-y").value = "0.5";
+      preview();
+    };
+    preview();
     d.querySelector("#crop-save").onclick = (event) =>
       busy(event.currentTarget, async () => {
-        const asset = await uploadImage(repo, file, "avatar", {
-          x: Number(d.querySelector("#crop-x").value),
-          y: Number(d.querySelector("#crop-y").value),
-        });
-        finish(asset);
-        d.close();
+        const message = d.querySelector("#crop-error");
+        message.hidden = true;
+        try {
+          const asset = await uploadImage(repo, file, "avatar", options());
+          finish(asset);
+          d.close();
+        } catch (error) {
+          message.textContent = errorText(error);
+          message.hidden = false;
+        }
       });
     d.addEventListener("close", () => finish(null), { once: true });
   });

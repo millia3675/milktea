@@ -998,6 +998,22 @@ h3 {
   overflow: hidden;
   border-radius: 8px;
 }
+.paper-viewport { min-width: 0; max-width: 100%; overflow: hidden; contain: inline-size; }
+.paper-viewport.paper-preview { max-height: 520px; }
+.paper.fixed-paper { transform-origin: top left; flex: none; }
+.fixed-paper .fixed-block { margin: 0 0 14px; position: relative; }
+.fixed-paper .fixed-block > p {
+  padding: 10px 8px 32px;
+  border: 1px solid transparent;
+  margin: 0;
+  min-height: 128px;
+  line-height: 1.9;
+  font-size: 1rem;
+}
+.fixed-paper.editor-content .editor-block textarea { padding: 10px 8px 32px; font-size: 1rem; }
+.fixed-paper .fixed-block .entry-photo { margin: 0; border-radius: 10px; padding: 8px; background: #f4f6fb; }
+.fixed-paper .fixed-block .entry-photo img { max-height: 400px; object-fit: contain; }
+.fixed-paper .fixed-block .photo-caption { margin: 0; padding: 8px; }
 .paper .blocks {
   position: relative;
   z-index: 2;
@@ -1088,6 +1104,9 @@ h3 {
   pointer-events: none;
   user-select: none;
   max-width: none;
+  padding: 0;
+  border: 0;
+  line-height: 0;
 }
 .placed-sticker img {
   display: block;
@@ -1760,7 +1779,7 @@ h3 {
   pointer-events: auto;
   touch-action: none;
   cursor: grab;
-  border: 1px dashed transparent;
+  border: 0;
   padding: 0;
   background: none;
   min-width: 28px;
@@ -2304,7 +2323,7 @@ dialog p {
   border-radius: 50%;
   background: #f2f5fc;
 }
-.crop-preview img {
+.crop-preview canvas {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2315,12 +2334,17 @@ dialog p {
 }
 .crop-controls label {
   font-size: 0.9rem;
-  color: #8998b1;
+  color: #555b6b;
 }
 .crop-controls input {
   display: block;
   width: 100%;
 }
+.crop-controls input[type="range"] { min-height: 44px; accent-color: var(--accent); }
+.crop-zoom-row { display: flex; gap: 12px; align-items: center; }
+.crop-zoom-row input { min-width: 0; }
+.crop-zoom-row button { flex: 0 0 44px; min-height: 44px; font-size: 1.2rem; background: #f3f1ed; border-radius: 8px; }
+#crop-zoom-value { float: right; font-variant-numeric: tabular-nums; }
 .inline-error {
   font-size: 0.86rem;
   color: #af5364;

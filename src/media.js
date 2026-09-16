@@ -1,4 +1,5 @@
 import { userError, uuid } from "./ui.js";
+import { drawAvatar } from "./avatar-crop.js";
 const mimeByExt = {
   woff2: "font/woff2",
   woff: "font/woff",
@@ -27,7 +28,7 @@ export function pickFiles(accept, multiple = false) {
     input.click();
   });
 }
-export async function imageBlob(file, kind, { x = 0.5, y = 0.5 } = {}) {
+export async function readImage(file, kind) {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
     throw userError("JPG, PNG, WebP 사진을 선택해주세요.");
   if (file.size > 20 * 1024 * 1024)
@@ -40,25 +41,20 @@ export async function imageBlob(file, kind, { x = 0.5, y = 0.5 } = {}) {
   } catch {
     throw userError("이미지를 읽을 수 없어요. 다른 파일을 선택해주세요.");
   }
+  if (bitmap.width * bitmap.height > 40000000) {
+    bitmap.close();
+    throw userError("사진 해상도가 너무 커요. 크기를 줄인 뒤 선택해주세요.");
+  }
+  return bitmap;
+}
+export async function imageBlob(file, kind, options = {}) {
+  const bitmap = await readImage(file, kind);
   try {
-    if (bitmap.width * bitmap.height > 40000000)
-      throw userError("사진 해상도가 너무 커요. 크기를 줄인 뒤 선택해주세요.");
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (kind === "avatar") {
       canvas.width = canvas.height = 512;
-      const side = Math.min(bitmap.width, bitmap.height);
-      ctx.drawImage(
-        bitmap,
-        (bitmap.width - side) * x,
-        (bitmap.height - side) * y,
-        side,
-        side,
-        0,
-        0,
-        512,
-        512,
-      );
+      drawAvatar(canvas, bitmap, options);
     } else {
       const max = kind === "sticker" ? 1024 : 1920;
       const ratio = Math.min(1, max / Math.max(bitmap.width, bitmap.height));

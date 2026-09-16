@@ -1,3 +1,4 @@
+import { paperLayout, stickerStyle, growPaper, fitPaper } from "./paper-layout.js";
 import { stickerInsertionPosition } from "./sticker-placement.js";
 import { bindStickerGestures } from "./sticker-gestures.js";
 import {
@@ -75,7 +76,7 @@ export async function editorPage(root, ctx, id, params) {
     rawTags = entry.tags.join(" ");
   const wasPublished = entry.status === "published";
   root.classList.add("editor-page");
-  root.innerHTML = `<header class="page-heading"><div><h1>${wasPublished ? "일기 다듬기" : "오늘의 페이지"}</h1><p>무슨 일이 있었나요? 천천히 적어보세요.</p></div><div class="heading-actions">${!wasPublished ? '<button class="button secondary" id="save-draft">임시저장</button>' : ""}<button class="button" id="publish-entry">${wasPublished ? "수정 저장" : "게시하기"}</button></div></header><div class="editor-layout"><div><div class="editor-paper"><div class="editor-meta">${icon("calendar")}<label class="sr-only" for="diary-date">작성 날짜</label><input type="date" id="diary-date" min="1900-01-01" max="${today()}" value="${e(entry.diary_date)}"><span class="save-status" id="save-status" role="status">${id ? "저장된 일기를 불러왔어요" : ""}</span></div><label class="sr-only" for="diary-title">일기 제목</label><input id="diary-title" class="editor-title" maxlength="100" placeholder="오늘의 제목을 적어주세요" value="${e(entry.title)}"><div class="mode-toggle" id="mode-toggle" ${entry.document.stickers.length ? "" : "hidden"}><button class="active" data-editor-mode="text">글 쓰기</button><button data-editor-mode="stickers">스티커 배치</button></div><p class="sticker-canvas-hint" id="sticker-gesture-hint" hidden><span class="desktop-sticker-hint">드래그로 이동 · 스티커 위에서 휠로 회전 · 모서리를 끌어 크기 조절<br>Shift + 휠로 각도를 조금씩 조절할 수 있어요.</span><span class="touch-sticker-hint">한 손가락으로 이동 · 두 손가락으로 크기와 각도 조절</span></p><div class="editor-content paper" id="editor-content"><div class="block-list" id="block-list"></div><div class="sticker-layer" id="sticker-layer"></div></div><div class="add-block-row"><button type="button" data-add-text>${icon("plus")} 글 추가</button><button type="button" data-add-image>${icon("image")} 사진 추가</button></div><section class="editor-music" aria-labelledby="editor-music-heading"><div class="music-heading">${icon("music")}<h2 id="editor-music-heading">오늘의 음악</h2><button type="button" id="remove-music" class="music-remove" hidden>음악 빼기</button></div><label for="diary-music-url" class="field-label">YouTube · YouTube Music 링크</label><input type="url" inputmode="url" id="diary-music-url" value="${e(entry.document.music?.url || "")}" placeholder="공유 링크를 붙여 넣어주세요" maxlength="2048" autocomplete="off" spellcheck="false" aria-describedby="music-preview"><p id="music-preview" class="music-help" aria-live="polite"></p><div class="music-credits-inputs"><div><label for="diary-music-title" class="field-label">곡 제목</label><input id="diary-music-title" value="${e(entry.document.music?.title || "")}" placeholder="링크에서 불러오거나 직접 입력" maxlength="120"></div><div><label for="diary-music-artist" class="field-label">가수 · 아티스트 <span class="optional-label">(선택)</span></label><input id="diary-music-artist" value="${e(entry.document.music?.artist || "")}" placeholder="노래한 가수나 아티스트 이름" maxlength="120"></div></div></section><div class="editor-tags"><label class="field-label" for="diary-tags">태그</label><input id="diary-tags" value="${e(rawTags)}" placeholder="#카페 #친구" maxlength="230"><span class="field-help">띄어쓰기 또는 #으로 구분해요. 최대 10개.</span></div><div class="editor-habits"><div class="field-label">오늘의 생활 기록</div><div class="habit-inputs" id="habit-inputs"></div><a class="tool-link" href="#/settings/diary">생활 기록 항목 관리</a></div></div><div class="editor-foot"><span>글과 사진 사이에 블록을 추가할 수 있어요.</span><span class="public-badge">${icon("lock")} 게시하면 모든 친구가 읽을 수 있어요.</span></div></div><aside class="editor-toolbar" aria-label="일기 꾸미기"><section class="tool-card font-tool"><h2><label for="diary-font">폰트</label></h2><select id="diary-font">${fontOptions(ctx.state.assets, entry.document.font, entry.document.font_asset_id)}</select><p class="font-live-preview font-${entry.document.font}" id="font-preview">오늘의 작은 순간을 기록해요.</p><button class="tool-link" id="pick-font">기본·내 폰트·공유 폰트 보기</button></section><section class="tool-card"><h2>종이 고르기</h2><div class="paper-options">${builtinPapers
+  root.innerHTML = `<header class="page-heading"><div><h1>${wasPublished ? "일기 다듬기" : "오늘의 페이지"}</h1><p>무슨 일이 있었나요? 천천히 적어보세요.</p></div><div class="heading-actions">${!wasPublished ? '<button class="button secondary" id="save-draft">임시저장</button>' : ""}<button class="button" id="publish-entry">${wasPublished ? "수정 저장" : "게시하기"}</button></div></header><div class="editor-layout"><div><div class="editor-paper"><div class="editor-meta">${icon("calendar")}<label class="sr-only" for="diary-date">작성 날짜</label><input type="date" id="diary-date" min="1900-01-01" max="${today()}" value="${e(entry.diary_date)}"><span class="save-status" id="save-status" role="status">${id ? "저장된 일기를 불러왔어요" : ""}</span></div><label class="sr-only" for="diary-title">일기 제목</label><input id="diary-title" class="editor-title" maxlength="100" placeholder="오늘의 제목을 적어주세요" value="${e(entry.title)}"><div class="mode-toggle" id="mode-toggle" ${entry.document.stickers.length ? "" : "hidden"}><button class="active" data-editor-mode="text">글 쓰기</button><button data-editor-mode="stickers">스티커 배치</button></div><p class="sticker-canvas-hint" id="sticker-gesture-hint" hidden><span class="desktop-sticker-hint">드래그로 이동 · 스티커 위에서 휠로 회전 · 모서리를 끌어 크기 조절<br>Shift + 휠로 각도를 조금씩 조절할 수 있어요.</span><span class="touch-sticker-hint">한 손가락으로 이동 · 두 손가락으로 크기와 각도 조절</span></p><div class="paper-viewport" id="editor-viewport"><div class="editor-content paper" id="editor-content"><div class="block-list" id="block-list"></div><div class="sticker-layer" id="sticker-layer"></div></div></div><div class="add-block-row"><button type="button" data-add-text>${icon("plus")} 글 추가</button><button type="button" data-add-image>${icon("image")} 사진 추가</button></div><section class="editor-music" aria-labelledby="editor-music-heading"><div class="music-heading">${icon("music")}<h2 id="editor-music-heading">오늘의 음악</h2><button type="button" id="remove-music" class="music-remove" hidden>음악 빼기</button></div><label for="diary-music-url" class="field-label">YouTube · YouTube Music 링크</label><input type="url" inputmode="url" id="diary-music-url" value="${e(entry.document.music?.url || "")}" placeholder="공유 링크를 붙여 넣어주세요" maxlength="2048" autocomplete="off" spellcheck="false" aria-describedby="music-preview"><p id="music-preview" class="music-help" aria-live="polite"></p><div class="music-credits-inputs"><div><label for="diary-music-title" class="field-label">곡 제목</label><input id="diary-music-title" value="${e(entry.document.music?.title || "")}" placeholder="링크에서 불러오거나 직접 입력" maxlength="120"></div><div><label for="diary-music-artist" class="field-label">가수 · 아티스트 <span class="optional-label">(선택)</span></label><input id="diary-music-artist" value="${e(entry.document.music?.artist || "")}" placeholder="노래한 가수나 아티스트 이름" maxlength="120"></div></div></section><div class="editor-tags"><label class="field-label" for="diary-tags">태그</label><input id="diary-tags" value="${e(rawTags)}" placeholder="#카페 #친구" maxlength="230"><span class="field-help">띄어쓰기 또는 #으로 구분해요. 최대 10개.</span></div><div class="editor-habits"><div class="field-label">오늘의 생활 기록</div><div class="habit-inputs" id="habit-inputs"></div><a class="tool-link" href="#/settings/diary">생활 기록 항목 관리</a></div></div><div class="editor-foot"><span>글과 사진 사이에 블록을 추가할 수 있어요.</span><span class="public-badge">${icon("lock")} 게시하면 모든 친구가 읽을 수 있어요.</span></div></div><aside class="editor-toolbar" aria-label="일기 꾸미기"><section class="tool-card font-tool"><h2><label for="diary-font">폰트</label></h2><select id="diary-font">${fontOptions(ctx.state.assets, entry.document.font, entry.document.font_asset_id)}</select><p class="font-live-preview font-${entry.document.font}" id="font-preview">오늘의 작은 순간을 기록해요.</p><button class="tool-link" id="pick-font">기본·내 폰트·공유 폰트 보기</button></section><section class="tool-card"><h2>종이 고르기</h2><div class="paper-options">${builtinPapers
     .map(
       ([key, label]) =>
         `<button class="paper-option ${key} ${entry.document.paper === key && !entry.document.background_asset_id ? "selected" : ""}" data-paper="${key}" aria-pressed="${entry.document.paper === key && !entry.document.background_asset_id}">${label}</button>`,
@@ -99,6 +100,30 @@ export async function editorPage(root, ctx, id, params) {
   const content = root.querySelector("#editor-content");
   const blockList = root.querySelector("#block-list");
   const stickerLayer = root.querySelector("#sticker-layer");
+  const viewport = root.querySelector("#editor-viewport");
+  let sheet = null;
+  function measureSheet() {
+    const layout = paperLayout(entry.document);
+    if (!layout) return;
+    const height = Math.max(240, content.offsetHeight);
+    growPaper(entry.document, height);
+    layout.blocks = Object.fromEntries([...blockList.children].map(node =>
+      [node.dataset.blockId, node.offsetHeight]));
+    for (const sticker of entry.document.stickers) updateStickerNode(sticker);
+  }
+  function fixSheet() {
+    if (sheet) return;
+    entry.document.layout ||= {
+      version: 1,
+      width: Math.max(240, Math.min(1200, content.offsetWidth)),
+      height: Math.max(240, content.offsetHeight),
+      blocks: {},
+    };
+    if (!paperLayout(entry.document)) return;
+    sheet = fitPaper(viewport, content, entry.document.layout, {
+      signal: ctx.signal, measure: measureSheet,
+    });
+  }
   const editorHandle = {
     get dirty() {
       return revision !== savedRevision || uploads > 0;
@@ -107,6 +132,7 @@ export async function editorPage(root, ctx, id, params) {
       destroyed = true;
       clearTimeout(timer);
       resizeObserver.disconnect();
+      sheet?.destroy();
       gestures?.cancel();
       root.classList.remove("editor-page");
     },
@@ -136,6 +162,7 @@ export async function editorPage(root, ctx, id, params) {
     root.querySelector("#save-draft")?.toggleAttribute("disabled", uploads > 0);
   }
   function snapshot(statusValue, focusInvalidMusic = false) {
+    sheet?.refresh();
     const result = structuredClone(entry);
     result.title = root.querySelector("#diary-title").value.trim();
     result.diary_date = root.querySelector("#diary-date").value;
@@ -305,7 +332,7 @@ export async function editorPage(root, ctx, id, params) {
       : '<span class="field-help">설정에서 나만의 체크 항목을 추가할 수 있어요.</span>';
   }
   function renderPaper() {
-    content.className = `editor-content paper ${entry.document.paper} font-${entry.document.font} ${stickerMode ? "editing-stickers" : ""}`;
+    content.className = `editor-content paper ${paperLayout(entry.document) ? "fixed-paper" : ""} ${entry.document.paper} font-${entry.document.font} ${stickerMode ? "editing-stickers" : ""}`;
     content.style.backgroundImage = "";
     content.style.fontFamily = "";
     delete content.dataset.background;
@@ -337,7 +364,7 @@ export async function editorPage(root, ctx, id, params) {
     stickerLayer.innerHTML = entry.document.stickers
       .map(
         (s) =>
-          `<button class="placed-sticker ${selectedSticker === s.id ? "selected" : ""}" data-sticker="${e(s.id)}" aria-label="붙인 스티커 선택, 방향키로 이동" aria-describedby="sticker-gesture-hint" style="left:${s.x * 100}%;top:${s.y * 100}%;transform:translate(-50%,-50%) rotate(${s.rotation}deg) scale(${s.scale});z-index:${s.z};--sticker-inverse-scale:${1 / s.scale}" ${stickerMode ? "" : 'tabindex="-1"'}><img data-asset="${e(s.asset_id)}" alt="" hidden draggable="false">${["nw", "ne", "sw", "se"].map((corner) => `<span class="sticker-resize-handle" data-sticker-resize="${corner}" aria-hidden="true"></span>`).join("")}</button>`,
+          `<button class="placed-sticker ${selectedSticker === s.id ? "selected" : ""}" data-sticker="${e(s.id)}" aria-label="붙인 스티커 선택, 방향키로 이동" aria-describedby="sticker-gesture-hint" style="${stickerStyle(s, paperLayout(entry.document))}" ${stickerMode ? "" : 'tabindex="-1"'}><img data-asset="${e(s.asset_id)}" alt="" hidden draggable="false">${["nw", "ne", "sw", "se"].map((corner) => `<span class="sticker-resize-handle" data-sticker-resize="${corner}" aria-hidden="true"></span>`).join("")}</button>`,
       )
       .join("");
     root.querySelector("#mode-toggle").hidden = !entry.document.stickers.length;
@@ -355,8 +382,9 @@ export async function editorPage(root, ctx, id, params) {
   function updateStickerNode(s) {
     const el = stickerLayer.querySelector(`[data-sticker="${s.id}"]`);
     if (el) {
-      el.style.left = s.x * 100 + "%";
-      el.style.top = s.y * 100 + "%";
+      const layout = paperLayout(entry.document);
+      el.style.left = layout ? `${s.x * layout.width}px` : `${s.x * 100}%`;
+      el.style.top = layout ? `${s.y * layout.height}px` : `${s.y * 100}%`;
       el.style.transform = `translate(-50%,-50%) rotate(${s.rotation}deg) scale(${s.scale})`;
       el.style.zIndex = s.z;
       el.style.setProperty("--sticker-inverse-scale", 1 / s.scale);
@@ -469,6 +497,7 @@ export async function editorPage(root, ctx, id, params) {
   async function addSticker(asset, position = captureStickerPosition()) {
     if (entry.document.stickers.length >= 40)
       throw userError("스티커는 40개까지 붙일 수 있어요.");
+    fixSheet();
     const s = {
       id: uuid(),
       asset_id: asset.id,
@@ -807,7 +836,10 @@ export async function editorPage(root, ctx, id, params) {
     },
     { signal: ctx.signal },
   );
+  if (paperLayout(entry.document)) fixSheet();
   renderBlocks();
+  if (entry.document.stickers.length) fixSheet();
+  sheet?.refresh();
   renderHabits();
   renderPaper();
   renderStickers();

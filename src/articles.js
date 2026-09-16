@@ -1,3 +1,4 @@
+import { paperLayout, stickerStyle, blockHeight, bindFixedPapers } from "./paper-layout.js";
 import { e, icon, busy, modal, confirmAction, toast, errorText } from "./ui.js";
 import { formatDate, formatTime } from "./dates.js";
 import { safeColor } from "./validation.js";
@@ -54,27 +55,30 @@ export function articleHTML(
 ) {
   const profile = ctx.state.profiles.find((x) => x.id === entry.author_id);
   const d = entry.document;
-  const blocks = detail ? d.blocks : d.blocks.slice(0, 4);
+  const layout = paperLayout(d);
+  const blocks = detail || layout ? d.blocks : d.blocks.slice(0, 4);
   let remaining = 750;
   const content = blocks
     .map((b) => {
       if (b.type === "text") {
-        const text = detail ? b.text : b.text.slice(0, Math.max(0, remaining));
+        const text = detail || layout ? b.text : b.text.slice(0, Math.max(0, remaining));
         remaining -= text.length;
+        if (layout) return `<section class="fixed-block" style="min-height:${blockHeight(layout, b.id)}px"><p>${e(text)}</p></section>`;
         return text
           ? `<p>${e(text)}${!detail && text.length < b.text.length ? "…" : ""}</p>`
           : "";
       }
-      return `<button class="entry-photo" data-full-image="${e(b.asset_id)}" aria-label="${e(b.alt || "일기 사진")} 크게 보기"><img data-asset="${e(b.asset_id)}" alt="${e(b.alt || "일기에 첨부한 사진")}" hidden loading="lazy"></button>${b.alt && detail ? `<div class="photo-caption">${e(b.alt)}</div>` : ""}`;
+      const photo = `<button class="entry-photo" data-full-image="${e(b.asset_id)}" aria-label="${e(b.alt || "일기 사진")} 크게 보기"><img data-asset="${e(b.asset_id)}" alt="${e(b.alt || "일기에 첨부한 사진")}" hidden loading="lazy"></button>${b.alt && detail ? `<div class="photo-caption">${e(b.alt)}</div>` : ""}`;
+      return layout ? `<section class="fixed-block" style="min-height:${blockHeight(layout, b.id)}px">${photo}</section>` : photo;
     })
     .join("");
   const shortened =
     !detail &&
-    (d.blocks.length > 4 ||
+    ((layout && layout.height > 600) || d.blocks.length > 4 ||
       d.blocks
         .filter((b) => b.type === "text")
         .reduce((n, b) => n + b.text.length, 0) > 750);
-  return `<article class="diary-card" data-entry-card="${e(entry.id)}" data-detail="${detail}"><header class="diary-author"><a href="#/people/${e(entry.author_id)}" aria-label="${e(profile?.nickname)}의 일기장">${avatar(profile)}</a><div><a class="author-link" href="#/people/${e(entry.author_id)}">${e(profile?.nickname || "친구")}</a><a class="date-label" href="#/home?date=${e(entry.diary_date)}">${entry.diary_date.replaceAll("-", ". ")}${entry.status === "draft" ? " · 임시저장" : ""}</a></div>${entry.author_id === ctx.me.id ? `<div class="entry-actions"><a class="icon-button" href="#/write/${e(entry.id)}" aria-label="일기 수정">${icon("pen")}</a><button class="icon-button" data-delete-entry="${e(entry.id)}" aria-label="일기 삭제">${icon("trash")}</button></div>` : ""}</header><h2 class="diary-title"><a href="#/entries/${e(entry.id)}">${e(entryTitle(entry))}</a></h2><div class="paper ${e(d.paper || "white")} font-${e(d.font || "system")}" ${d.background_asset_id ? `data-background="${e(d.background_asset_id)}"` : ""} ${d.font_asset_id ? `data-font="${e(d.font_asset_id)}"` : ""}><div class="blocks">${content}</div>${!shortened ? `<div class="sticker-layer" aria-hidden="true">${(d.stickers || []).map((s) => `<span class="placed-sticker" style="left:${Number(s.x) * 100}%;top:${Number(s.y) * 100}%;transform:translate(-50%,-50%) rotate(${Number(s.rotation)}deg) scale(${Number(s.scale)});z-index:${Number(s.z)}"><img data-asset="${e(s.asset_id)}" alt="" hidden></span>`).join("")}</div>` : ""}</div>${shortened ? `<a class="read-more" href="#/entries/${e(entry.id)}">일기 전체 보기 ${icon("chevron")}</a>` : ""}${musicHTML(d.music, entry.id)}${entry.tags.length || d.habits?.length ? `<div class="entry-notes">${entry.tags.length ? `<div class="tag-list">${entry.tags.map((t) => `<a class="tag" style="background:${safeColor(profile?.main_color)}12" href="#/people/${e(entry.author_id)}/archive?month=${e(entry.diary_date.slice(0, 7))}&tag=${encodeURIComponent(t)}">#${e(t)}</a>`).join("")}</div>` : ""}${d.habits?.length ? `<div class="habit-list"><span class="habit-label">생활 기록</span>${d.habits.map((h) => `<span>${e(h.name)} ${h.type === "boolean" ? (h.value ? "✓" : "○") : `${e(h.value)}${e(h.unit)}`}</span>`).join("")}</div>` : ""}</div>` : ""}${entry.status === "published" ? `<div class="reactions">${reactionHTML(entry.id, reactions, ctx.me.id)}</div>` : ""}<div class="comments">${commentsHTML(entry, comments, ctx, detail)}</div></article>`;
+  return `<article class="diary-card" data-entry-card="${e(entry.id)}" data-detail="${detail}"><header class="diary-author"><a href="#/people/${e(entry.author_id)}" aria-label="${e(profile?.nickname)}의 일기장">${avatar(profile)}</a><div><a class="author-link" href="#/people/${e(entry.author_id)}">${e(profile?.nickname || "친구")}</a><a class="date-label" href="#/home?date=${e(entry.diary_date)}">${entry.diary_date.replaceAll("-", ". ")}${entry.status === "draft" ? " · 임시저장" : ""}</a></div>${entry.author_id === ctx.me.id ? `<div class="entry-actions"><a class="icon-button" href="#/write/${e(entry.id)}" aria-label="일기 수정">${icon("pen")}</a><button class="icon-button" data-delete-entry="${e(entry.id)}" aria-label="일기 삭제">${icon("trash")}</button></div>` : ""}</header><h2 class="diary-title"><a href="#/entries/${e(entry.id)}">${e(entryTitle(entry))}</a></h2><div class="paper-viewport ${layout && shortened ? "paper-preview" : ""}"><div class="paper ${layout ? "fixed-paper" : ""} ${e(d.paper || "white")} font-${e(d.font || "system")}" ${d.background_asset_id ? `data-background="${e(d.background_asset_id)}"` : ""} ${d.font_asset_id ? `data-font="${e(d.font_asset_id)}"` : ""}><div class="blocks">${content}</div>${(!shortened || layout) ? `<div class="sticker-layer" aria-hidden="true">${(d.stickers || []).map((s) => `<span class="placed-sticker" style="${stickerStyle(s, layout)}"><img data-asset="${e(s.asset_id)}" alt="" hidden></span>`).join("")}</div>` : ""}</div></div>${shortened ? `<a class="read-more" href="#/entries/${e(entry.id)}">일기 전체 보기 ${icon("chevron")}</a>` : ""}${musicHTML(d.music, entry.id)}${entry.tags.length || d.habits?.length ? `<div class="entry-notes">${entry.tags.length ? `<div class="tag-list">${entry.tags.map((t) => `<a class="tag" style="background:${safeColor(profile?.main_color)}12" href="#/people/${e(entry.author_id)}/archive?month=${e(entry.diary_date.slice(0, 7))}&tag=${encodeURIComponent(t)}">#${e(t)}</a>`).join("")}</div>` : ""}${d.habits?.length ? `<div class="habit-list"><span class="habit-label">생활 기록</span>${d.habits.map((h) => `<span>${e(h.name)} ${h.type === "boolean" ? (h.value ? "✓" : "○") : `${e(h.value)}${e(h.unit)}`}</span>`).join("")}</div>` : ""}</div>` : ""}${entry.status === "published" ? `<div class="reactions">${reactionHTML(entry.id, reactions, ctx.me.id)}</div>` : ""}<div class="comments">${commentsHTML(entry, comments, ctx, detail)}</div></article>`;
 }
 export async function hydrateAssets(root, repo) {
   const tasks = [];
@@ -143,6 +147,7 @@ export async function hydrateAssets(root, repo) {
   await Promise.allSettled(tasks);
 }
 export function bindArticles(root, ctx, loaded) {
+  bindFixedPapers(root, loaded.entries, ctx.signal);
   bindMusicPlayers(root, ctx.signal);
   const pendingPhotos = new Map();
   const getEntry = (id) => loaded.entries.find((x) => x.id === id);

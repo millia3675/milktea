@@ -200,7 +200,10 @@ export function bindStickerGestures(
           positions()[0],
           layer.getBoundingClientRect(),
           handle.dataset.stickerResize,
-          { width: target.offsetWidth, height: target.offsetHeight },
+          {
+            width: target.offsetWidth * layer.getBoundingClientRect().width / layer.offsetWidth,
+            height: target.offsetHeight * layer.getBoundingClientRect().width / layer.offsetWidth,
+          },
         );
       } else rebase();
     },
