@@ -77,6 +77,18 @@ where id='00000000-0000-4000-8000-000000000001';
 
 회원 접근을 중지할 때는 members.active=false로 설정합니다. 기존 글을 보존하며 이후 DB/Storage 접근을 차단합니다. 회원 완전 삭제와 파일 정리는 별도 운영 절차입니다.
 
+## 초대 링크와 비밀번호 설정
+
+운영자가 직접 전달하는 링크는 밀크티의 `auth-callback.html`로 연결합니다. 페이지를 열거나 새로고침할 때는 인증 토큰을 사용하지 않습니다. 초대받은 이메일을 확인하고 12자 이상의 비밀번호와 확인 값을 입력한 뒤 ‘비밀번호 저장하고 들어가기’를 눌러야 인증과 저장을 진행합니다.
+
+관리자 환경의 `auth.admin.generateLink`로 새 계정에는 `invite`, 이미 이메일이 확인된 계정의 비밀번호 설정 복구에는 `recovery` 링크를 발급합니다. 반환된 `properties.hashed_token`과 인증 종류, 대상 이메일을 URL fragment의 `token_hash`, `type`, `email`에 담습니다. 브라우저는 제출 시 `verifyOtp`를 호출합니다. 관리자 키는 브라우저나 저장소에 넣지 않습니다. 발급한 개인 링크는 해당 수신자에게만 전달합니다.
+
+기존 Supabase 인증 URL은 접속 즉시 일회용 토큰을 사용할 수 있습니다. 이미 사용됐거나 만료된 링크는 새 링크로 교체해야 합니다. 이미 비밀번호를 저장했다면 일반 로그인으로 들어갑니다. 기존 이메일의 세션 복귀 방식과 앱에서 요청한 비밀번호 재설정도 계속 지원합니다.
+
+현재 초대 관리 화면과 별도 SMTP는 연결하지 않았습니다. 운영자가 발급한 링크를 개별 전달하는 방식으로 친구를 추가합니다. 직접 전달하는 링크의 변경이 Supabase 기본 메일 템플릿까지 변경하는 것은 아닙니다.
+
+공식 참고: [메일 미리보기에 의한 일회용 링크 소비와 확인 버튼 방식](https://supabase.com/docs/guides/auth/auth-email-templates), [토큰 검증 API](https://supabase.com/docs/reference/javascript/auth-verifyotp).
+
 ## GitHub Pages
 
 제공한 `.github/workflows/pages.yml`은 main에 push할 때 테스트·빌드한 뒤 Pages에 배포합니다. 저장소의 Settings → Pages → Source를 GitHub Actions로 지정합니다. Vite base를 상대 경로로 설정하여 프로젝트 사이트의 하위 경로를 지원합니다.
