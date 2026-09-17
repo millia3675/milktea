@@ -50,4 +50,3 @@ export async function templatesPage(root, ctx) {
   }));
   await hydrateAssets(list, ctx.repo);
 }
-
