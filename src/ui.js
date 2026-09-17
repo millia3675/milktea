@@ -54,6 +54,12 @@ export function errorText(error) {
   map.ENTRY_CHANGED_OR_UNAVAILABLE =
     "다른 화면에서 수정된 일기예요. 작성한 내용을 복사한 뒤 다시 열어주세요.";
   Object.assign(map, {
+    ADMIN_REQUIRED: "관리자만 사용할 수 있는 기능이에요.",
+    INVALID_PACK: "꾸러미 이름과 스티커, 대표 스티커를 확인해주세요.",
+    PACK_UNAVAILABLE: "이 꾸러미가 삭제되었어요. 목록을 다시 열어주세요.",
+    PACK_ASSET_UNAVAILABLE: "공유 중인 스티커만 넣을 수 있어요. 목록을 새로고침해주세요.",
+    INVALID_TEMPLATE: "서식을 저장하지 못했어요. 꾸미기 자료를 다시 확인해주세요.",
+    TEMPLATE_UNAVAILABLE: "서식을 찾을 수 없어요. 내 서식에서 다시 선택해주세요.",
     COMMENT_PARENT_UNAVAILABLE: "답글을 달 댓글이 삭제되었어요. 작성한 내용을 확인하고 답글 취소 후 새 댓글로 남겨주세요.",
     comments_parent_in_entry_fkey: "답글을 달 댓글이 삭제되었거나 사용할 수 없어요. 작성한 내용은 그대로 남아 있어요.",
     FUTURE_DIARY_DATE: "미래 날짜로는 쓸 수 없어요.",

@@ -1,5 +1,6 @@
 import "./styles.css";
 import "./paper.css";
+import "./community.css";
 import {
   CloudRepository,
   DemoRepository,
@@ -79,7 +80,7 @@ function renderShell(path) {
         ? 1
         : a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
   );
-  app.innerHTML = `<div class="shell"><aside class="sidebar" aria-label="주 메뉴"><a class="brand" href="#/home"><img src="./favicon.svg" alt="">밀크티</a><p class="brand-caption">친구들과 나누는 교환일기</p><a class="nav-item ${path === "/home" ? "active" : ""}" href="#/home">${icon("home")}<span>홈</span></a><div class="nav-caption">우리의 일기장</div><div class="friend-list">${friends.map((p) => `<a class="nav-item ${personId === p.id ? "active" : ""}" href="#/people/${e(p.id)}" ${personId === p.id ? 'aria-current="page"' : ""}>${avatar(p)}<span class="nickname">${e(p.nickname)}</span>${p.id === me.id ? '<small class="me-label">나</small>' : ""}<i class="unread-dot" data-unread-user="${e(p.id)}" ${unreadFor(p.id) ? "" : "hidden"} aria-label="아직 읽지 않은 오늘 일기"></i></a>`).join("")}</div><nav class="nav-bottom"><a class="nav-item ${path.startsWith("/settings") ? "active" : ""}" href="#/settings/profile">${icon("settings")}<span>설정</span></a><button class="nav-item" id="logout">${icon("logout")}<span>${repo.mode === "demo" ? "체험 나가기" : "로그아웃"}</span></button></nav></aside><div class="mobile-menu-overlay"></div><div class="topbar-mobile"><button class="icon-button" id="mobile-menu" aria-label="친구 목록 열기" aria-expanded="false">${icon("menu")}</button><a class="mobile-brand" href="#/home">밀크티</a><a href="#/settings/profile" aria-label="내 설정">${avatar(own, "tiny")}</a></div>${repo.mode === "demo" ? '<div class="demo-banner"><span>체험 공간 · 이 브라우저에만 저장돼요</span><button class="text-button" id="setup-help">친구들과 쓰려면</button></div>' : ""}<main class="main" id="main" tabindex="-1"><div class="loading-block" role="status">일기장을 펼치고 있어요…</div></main></div>`;
+  app.innerHTML = `<div class="shell"><aside class="sidebar" aria-label="주 메뉴"><a class="brand" href="#/home"><img src="./favicon.svg" alt="">밀크티</a><p class="brand-caption">친구들과 나누는 교환일기</p><a class="nav-item ${path === "/home" ? "active" : ""}" href="#/home">${icon("home")}<span>홈</span></a><div class="nav-caption">우리의 일기장</div><div class="friend-list">${friends.map((p) => `<a class="nav-item ${personId === p.id ? "active" : ""}" href="#/people/${e(p.id)}" ${personId === p.id ? 'aria-current="page"' : ""}>${avatar(p)}<span class="nickname">${e(p.nickname)}</span>${p.id === me.id ? '<small class="me-label">나</small>' : ""}<i class="unread-dot" data-unread-user="${e(p.id)}" ${unreadFor(p.id) ? "" : "hidden"} aria-label="아직 읽지 않은 오늘 일기"></i></a>`).join("")}</div><nav class="nav-bottom"><a class="nav-item ${path === "/templates" ? "active" : ""}" href="#/templates">${icon("book")}<span>내 서식</span></a>${state.isAdmin ? `<a class="nav-item ${path === "/admin" ? "active" : ""}" href="#/admin">${icon("lock")}<span>관리자</span></a>` : ""}<a class="nav-item ${path.startsWith("/settings") ? "active" : ""}" href="#/settings/profile">${icon("settings")}<span>설정</span></a><button class="nav-item" id="logout">${icon("logout")}<span>${repo.mode === "demo" ? "체험 나가기" : "로그아웃"}</span></button></nav></aside><div class="mobile-menu-overlay"></div><div class="topbar-mobile"><button class="icon-button" id="mobile-menu" aria-label="친구 목록 열기" aria-expanded="false">${icon("menu")}</button><a class="mobile-brand" href="#/home">밀크티</a><a href="#/settings/profile" aria-label="내 설정">${avatar(own, "tiny")}</a></div>${repo.mode === "demo" ? '<div class="demo-banner"><span>체험 공간 · 이 브라우저에만 저장돼요</span><button class="text-button" id="setup-help">친구들과 쓰려면</button></div>' : ""}<main class="main" id="main" tabindex="-1"><div class="loading-block" role="status">일기장을 펼치고 있어요…</div></main></div>`;
   app.querySelector("#setup-help")?.addEventListener("click", setupHelp);
   app.querySelector("#logout").addEventListener("click", (event) =>
     busy(event.currentTarget, async () => {
@@ -209,6 +210,12 @@ async function render() {
     else if (path === "/write" || path.startsWith("/write/")) {
       const { editorPage } = await import("./editor.js");
       await editorPage(root, ctx, path.split("/")[2], search);
+    } else if (path === "/admin") {
+      const { adminPage } = await import("./admin.js");
+      await adminPage(root, ctx);
+    } else if (path === "/templates") {
+      const { templatesPage } = await import("./templates.js");
+      await templatesPage(root, ctx);
     } else if (path.startsWith("/settings")) {
       const { settingsPage } = await import("./settings.js");
       await settingsPage(root, ctx, path.split("/")[2] || "profile");

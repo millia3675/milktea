@@ -1,3 +1,4 @@
+import { dailyQuestion } from "./daily-question.js";
 import { e, icon, emptyState, busy } from "./ui.js";
 import {
   today,
@@ -97,6 +98,23 @@ async function mountFeed(
   bindArticles(grid, ctx, loaded);
 }
 export async function homePage(root, ctx, params) {
+  const question = dailyQuestion();
+  let questionTimer;
+  function scheduleQuestion() {
+    const next = Date.parse(`${addDays(today(), 1)}T00:00:00+09:00`);
+    questionTimer = setTimeout(() => {
+      if (ctx.signal.aborted) return;
+      const q = dailyQuestion(), panel = root.querySelector(".daily-question");
+      if (panel) {
+        panel.querySelector("p").textContent = q.text;
+        panel.querySelector(".field-help").textContent = `${q.date.replaceAll("-", ".")} · 같은 질문, 서로 다른 이야기`;
+        panel.querySelector("a").href = `#/write?date=${q.date}&question=1`;
+      }
+      scheduleQuestion();
+    }, Math.max(1000, next - Date.now() + 50));
+  }
+  scheduleQuestion();
+  ctx.signal.addEventListener("abort", () => clearTimeout(questionTimer), { once: true });
   const date = params.get("date") || today();
   const entries = ctx.state.entries.filter(
     (x) => x.status === "published" && x.diary_date === date,
@@ -110,7 +128,7 @@ export async function homePage(root, ctx, params) {
         ? `<a class="button" href="#/write?date=${date}">${icon("plus")} 일기 쓰기</a>`
         : "",
     ) +
-    `<details class="home-mobile-calendar" ${params.get("calendar") === "1" ? "open" : ""}><summary>${icon("calendar")}<span>월별로 보기</span>${icon("chevron")}</summary>${calendarHTML(date, ctx.state.entries, ctx.me.id, true)}</details><div class="home-layout"><section class="home-stream" aria-label="선택한 날짜의 일기"><div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div></section></div></div>`;
+    `<section class="daily-question" aria-labelledby="daily-question-heading"><div><h2 id="daily-question-heading">오늘의 질문</h2><p>${e(question.text)}</p><span class="field-help">${question.date.replaceAll("-", ".")} · 같은 질문, 서로 다른 이야기</span></div><a class="button secondary" href="#/write?date=${question.date}&question=1">답하며 일기 쓰기 ${icon("pen")}</a></section><details class="home-mobile-calendar" ${params.get("calendar") === "1" ? "open" : ""}><summary>${icon("calendar")}<span>월별로 보기</span>${icon("chevron")}</summary>${calendarHTML(date, ctx.state.entries, ctx.me.id, true)}</details><div class="home-layout"><section class="home-stream" aria-label="선택한 날짜의 일기"><div class="feed-heading"><h2>${formatDate(date, true)}</h2><span>우리의 이야기 ${entries.length}편</span></div><div id="feed"></div></section></div></div>`;
   const mobileCalendar = root.querySelector(".home-mobile-calendar");
   mobileCalendar.addEventListener(
     "click",

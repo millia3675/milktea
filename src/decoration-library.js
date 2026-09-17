@@ -171,44 +171,51 @@ function builtinHTML(kind, picking) {
 }
 
 export async function mountLibrary(root, ctx, kind, onPick) {
-  let category = "builtin";
+  let category = "builtin", selectedPack = null;
+  const packs = kind === "sticker" ? await ctx.repo.stickerPacks() : [];
+  if (ctx.signal.aborted) return;
+  const categories = [["builtin", "밀크티 기본"], ["mine", `내 ${labels[kind]}`], ["shared", "다함께 쓰는 자료"], ...(kind === "sticker" ? [["packs", "꾸러미"]] : [])];
+  function packHTML() {
+    const available = new Set(ctx.state.assets.filter(a => a.kind === "sticker" && a.is_shared && !a.archived && !isRetiredSticker(a)).map(a => a.id));
+    const visible = packs.map(p => ({ ...p, asset_ids: p.asset_ids.filter(id => available.has(id)) })).filter(p => p.asset_ids.length);
+    return visible.length ? `<div class="pack-list">${visible.map(p => `<button class="pack-cover" data-open-pack="${e(p.id)}"><span class="pack-cover-image"><img data-asset="${e(p.asset_ids.includes(p.cover_asset_id) ? p.cover_asset_id : p.asset_ids[0])}" alt="" hidden></span><strong>${e(p.name)}</strong><small>스티커 ${p.asset_ids.length}개</small></button>`).join("")}</div>` : '<p class="asset-empty">아직 꾸러미가 없어요. 운영자가 공유 스티커를 묶으면 여기에 보여요.</p>';
+  }
   const draw = () => {
     const assets = ctx.state.assets.filter(
       (a) =>
         a.kind === kind &&
         !a.archived &&
         !isRetiredSticker(a) &&
-        (category === "mine" ? a.owner_id === ctx.me.id : a.is_shared),
+        (category === "packs" ? selectedPack?.asset_ids.includes(a.id) && a.is_shared : category === "mine" ? a.owner_id === ctx.me.id : a.is_shared),
     );
-    root.innerHTML = `<div class="library-heading"><div><h2>${labels[kind]}</h2><p class="field-help">${kind === "font" ? "읽기 좋은 글씨로 나만의 분위기를 더해요." : "기본 자료부터 친구들이 나눈 취향까지."}</p></div><button class="button secondary" data-upload-kind="${kind}">${icon("plus")} 여러 개 등록</button></div><div class="library-tabs" role="tablist" aria-label="${labels[kind]} 자료 분류">${[
-      ["builtin", "밀크티 기본"],
-      ["mine", `내 ${labels[kind]}`],
-      ["shared", "다함께 쓰는 자료"],
-    ]
+    root.innerHTML = `<div class="library-heading"><div><h2>${labels[kind]}</h2><p class="field-help">${kind === "font" ? "읽기 좋은 글씨로 나만의 분위기를 더해요." : "기본 자료부터 친구들이 나눈 취향까지."}</p></div><button class="button secondary" data-upload-kind="${kind}">${icon("plus")} 여러 개 등록</button></div><div class="library-tabs" role="tablist" aria-label="${labels[kind]} 자료 분류">${categories
       .map(
         ([id, name]) =>
           `<button role="tab" id="${kind}-tab-${id}" aria-controls="${kind}-panel" aria-selected="${category === id}" tabindex="${category === id ? 0 : -1}" data-category="${id}">${name}</button>`,
       )
       .join(
         "",
-      )}</div><div role="tabpanel" id="${kind}-panel" aria-labelledby="${kind}-tab-${category}">${category === "builtin" ? builtinHTML(kind, !!onPick) : assets.length ? `<div class="asset-grid">${assets.map((a) => `<div class="asset-tile">${onPick ? `<button class="asset-select" data-pick-asset="${e(a.id)}">` : ""}${kind === "font" ? `<div class="font-file" data-font="${e(a.id)}">오늘의 기록</div>` : `<img data-asset="${e(a.id)}" alt="${e(a.name)}" hidden>`}<span title="${e(a.name)}">${e(a.name)}</span>${onPick ? "</button>" : ""}<small>${a.is_shared ? "다함께 사용" : "나만 사용"}</small>${!onPick && a.owner_id === ctx.me.id ? `<button class="icon-button" data-archive-asset="${e(a.id)}" aria-label="${e(a.name)} 라이브러리에서 숨기기">${icon("close")}</button>` : ""}</div>`).join("")}</div>` : `<div class="asset-empty">${category === "mine" ? "아직 등록한 자료가 없어요. 여러 파일을 한 번에 추가해보세요." : "친구들과 함께 쓸 첫 자료를 등록해보세요."}</div>`}</div>`;
+      )}</div><div role="tabpanel" id="${kind}-panel" aria-labelledby="${kind}-tab-${category}">${category === "packs" && selectedPack ? `<div class="library-heading"><h3>${e(selectedPack.name)}</h3><button class="text-button" data-pack-back>꾸러미 목록</button></div>` : ""}${category === "builtin" ? builtinHTML(kind, !!onPick) : category === "packs" && !selectedPack ? packHTML() : assets.length ? `<div class="asset-grid">${assets.map((a) => `<div class="asset-tile">${onPick ? `<button class="asset-select" data-pick-asset="${e(a.id)}">` : ""}${kind === "font" ? `<div class="font-file" data-font="${e(a.id)}">오늘의 기록</div>` : `<img data-asset="${e(a.id)}" alt="${e(a.name)}" hidden>`}<span title="${e(a.name)}">${e(a.name)}</span>${onPick ? "</button>" : ""}<small>${a.is_shared ? "다함께 사용" : "나만 사용"}</small>${!onPick && a.owner_id === ctx.me.id ? `<button class="icon-button" data-archive-asset="${e(a.id)}" aria-label="${e(a.name)} 라이브러리에서 숨기기">${icon("close")}</button>` : ""}</div>`).join("")}</div>` : `<div class="asset-empty">${category === "mine" ? "아직 등록한 자료가 없어요. 여러 파일을 한 번에 추가해보세요." : "친구들과 함께 쓸 첫 자료를 등록해보세요."}</div>`}</div>`;
+    root.querySelectorAll("[data-open-pack]").forEach(b => b.onclick = () => { selectedPack = packs.find(p => p.id === b.dataset.openPack); draw(); root.querySelector("[data-pack-back]")?.focus(); });
+    root.querySelector("[data-pack-back]")?.addEventListener("click", () => { const id = selectedPack.id; selectedPack = null; draw(); root.querySelector(`[data-open-pack="${id}"]`)?.focus(); });
     const tabs = [...root.querySelectorAll("[data-category]")];
     tabs.forEach((btn, index) => {
       btn.onclick = () => {
         category = btn.dataset.category;
+        selectedPack = null;
         draw();
         root.querySelector(`[data-category="${category}"]`).focus();
       };
       btn.onkeydown = (event) => {
         const next =
           event.key === "ArrowRight"
-            ? (index + 1) % 3
+            ? (index + 1) % tabs.length
             : event.key === "ArrowLeft"
-              ? (index + 2) % 3
+              ? (index + tabs.length - 1) % tabs.length
               : event.key === "Home"
                 ? 0
                 : event.key === "End"
-                  ? 2
+                  ? tabs.length - 1
                   : null;
         if (next !== null) {
           event.preventDefault();

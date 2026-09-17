@@ -167,8 +167,41 @@ export class CloudRepository {
       entries: values[3],
       reads: values[4],
       assets: values[5],
+      isAdmin: check(await client.rpc("is_admin")),
     };
   }
+  async invite(email, recovery = false) {
+    const { data, error } = await client.functions.invoke("admin-invite", { body: { email, recovery } });
+    if (error) {
+      let details;
+      try { details = await error.context?.json(); } catch { /* Gateway/network error. */ }
+      throw userError(details?.message || "초대 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
+    return data;
+  }
+  async stickerPacks() {
+    const [packs, items] = await Promise.all([
+      all(() => client.from("sticker_packs").select("*").order("created_at").order("id")),
+      all(() => client.from("sticker_pack_items").select("*").order("pack_id").order("position").order("asset_id")),
+    ]);
+    return packs.map(pack => ({ ...pack, asset_ids: items.filter(i => i.pack_id === pack.id).map(i => i.asset_id) }));
+  }
+  async saveStickerPack(pack) {
+    return check(await client.rpc("save_sticker_pack", {
+      p_id: pack.id || null, p_name: pack.name, p_assets: pack.asset_ids, p_cover: pack.cover_asset_id,
+    }));
+  }
+  async deleteStickerPack(id) { check(await client.rpc("delete_sticker_pack", { p_id: id })); }
+  async templates() {
+    return all(() => client.from("diary_templates").select("*").order("created_at", { ascending: false }).order("id"));
+  }
+  async template(id) { return check(await client.from("diary_templates").select("*").eq("id", id).maybeSingle()); }
+  async saveTemplate({ id, name, decoration }) {
+    const query = id ? client.from("diary_templates").update({ name }).eq("id", id)
+      : client.from("diary_templates").insert({ id: uuid(), name, decoration });
+    return check(await query.select().single());
+  }
+  async deleteTemplate(id) { check(await client.from("diary_templates").delete().eq("id", id)); }
   async entries(ids) {
     if (!ids.length) return { entries: [], comments: [], reactions: [] };
     const values = await Promise.all([
@@ -485,8 +518,23 @@ export class DemoRepository {
       assets: d.assets.filter(
         (x) => x.owner_id === this.user.id || x.is_shared,
       ),
+      isAdmin: false,
     });
   }
+  async stickerPacks() { return structuredClone((await this.data()).stickerPacks || []); }
+  async templates() { return structuredClone((await this.data()).templates || []); }
+  async template(id) { return (await this.templates()).find(t => t.id === id) || null; }
+  async saveTemplate({ id, name, decoration }) {
+    return mutate(d => {
+      d.templates ||= [];
+      const existing = d.templates.find(t => t.id === id);
+      if (id && !existing) throw new Error("TEMPLATE_UNAVAILABLE");
+      if (existing) existing.name = name;
+      else d.templates.unshift({ id: uuid(), owner_id: this.user.id, name, decoration: structuredClone(decoration), created_at: new Date().toISOString() });
+      return structuredClone(existing || d.templates[0]);
+    });
+  }
+  async deleteTemplate(id) { return mutate(d => { d.templates = (d.templates || []).filter(t => t.id !== id); }); }
   async entries(ids) {
     const d = await this.data();
     return structuredClone({

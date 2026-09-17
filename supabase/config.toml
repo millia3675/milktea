@@ -17,3 +17,7 @@ enable_confirmations = true
 # The handler validates the user's bearer token with Auth getUser and rechecks the password.
 # Do not rely on the gateway's legacy JWT/API-key check for authorization.
 verify_jwt = false
+
+[functions.admin-invite]
+# Auth getUser and a server-side administrator grant are checked by the handler.
+verify_jwt = false

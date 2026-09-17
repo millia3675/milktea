@@ -1,6 +1,7 @@
 import { today, validDate } from "./dates.js";
 import { userError } from "./ui.js";
 import { validMusic, musicLinkHelp } from "./music.js";
+import { validQuestion } from "./daily-question.js";
 export function parseTags(input) {
   const tags = [
     ...new Set(
@@ -20,6 +21,7 @@ export function validateEntry(entry) {
   if (entry.title.length > 100)
     throw userError("제목은 100자까지 쓸 수 있어요.");
   const d = entry.document;
+  if (!validQuestion(d.question)) throw userError("일기의 질문을 확인해주세요.");
   if (!validMusic(d.music)) throw userError(musicLinkHelp);
   if (d.blocks.length > 100 || d.stickers.length > 40 || d.habits.length > 30)
     throw userError(
