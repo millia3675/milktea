@@ -55,9 +55,9 @@ npm run preview
 
 ## Supabase 연결
 
-현재 프로젝트에는 아래 초기화와 인증 설정을 적용했습니다. 데이터베이스 마이그레이션 8개와 비공개 버킷 5개가 준비되어 있습니다. 다음 절차는 다른 프로젝트에 설치하거나 친구를 추가할 때 참고합니다.
+현재 프로젝트에는 아래 초기화와 인증 설정을 적용했습니다. 데이터베이스 마이그레이션 9개와 비공개 버킷 5개가 준비되어 있습니다. 다음 절차는 다른 프로젝트에 설치하거나 친구를 추가할 때 참고합니다.
 
-1. 새 프로젝트를 만들고 `supabase/migrations/`의 SQL 8개를 파일명 순서대로 SQL Editor에서 postgres 권한으로 각각 한 번 실행합니다. 이미 적용한 파일은 반복하지 않고 남은 파일만 실행합니다. 5번은 파일 등록 직후 읽기 권한, 6번은 본인 계정 삭제, 7번은 중첩 답글, 8번은 관리자 권한·스티커 꾸러미·개인 서식·질문 검증을 지원합니다. 기존 데이터를 지우는 초기화 스크립트가 아닙니다.
+1. 새 프로젝트를 만들고 `supabase/migrations/`의 SQL 9개를 파일명 순서대로 SQL Editor에서 postgres 권한으로 각각 한 번 실행합니다. 이미 적용한 파일은 반복하지 않고 남은 파일만 실행합니다. 5번은 파일 등록 직후 읽기 권한, 6번은 본인 계정 삭제, 7번은 중첩 답글, 8번은 관리자 권한·스티커 꾸러미·개인 서식·질문 검증, 9번은 서식·꾸러미에서 사용하는 원본 파일의 삭제 보호를 지원합니다. 기존 데이터를 지우는 초기화 스크립트가 아닙니다.
 2. Auth 일반 설정에서 신규 회원가입과 anonymous sign-in을 비활성화하되, 이메일 로그인 제공자는 활성화합니다. CLI에서는 `[auth].enable_signup=false`, `[auth.email].enable_signup=true`를 사용합니다.
 3. `public/config.js`의 supabaseUrl과 publishableKey를 채웁니다. 또는 `.env.example`을 `.env.local`로 복사해 같은 두 값을 설정합니다.
 4. Auth URL Configuration의 Site URL을 `https://millia3675.github.io/milktea/`로 지정합니다. Redirect URLs에 `https://millia3675.github.io/milktea/auth-callback.html`을 추가합니다.
