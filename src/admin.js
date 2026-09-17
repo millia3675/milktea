@@ -77,21 +77,34 @@ export async function adminPage(root, ctx) {
     let cover = selected.has(pack?.cover_asset_id) ? pack.cover_asset_id : [...selected][0];
     editor.innerHTML = `<form class="pack-editor-form"><div class="library-heading"><h3>${pack ? "꾸러미 수정" : "새 꾸러미"}</h3><button class="text-button" type="button" id="cancel-pack">닫기</button></div><label class="field-label" for="pack-name">꾸러미 이름</label><input id="pack-name" maxlength="50" required value="${e(pack?.name || "")}" placeholder="예: 고양이의 하루"><div class="pack-selection-heading"><label for="pack-search">스티커 고르기 <span id="pack-count"></span></label><input id="pack-search" type="search" placeholder="파일 이름으로 찾기" aria-label="공유 스티커 검색"></div><p class="field-help">스티커를 선택한 뒤, 표지로 쓸 한 장의 ‘대표’를 눌러주세요. 최대 200개까지 담을 수 있어요.</p><div class="pack-select-grid"></div><p class="form-message" role="alert"></p><div class="dialog-actions"><button class="button" type="submit">꾸러미 저장</button></div></form>`;
     const form = editor.querySelector("form");
+    const grid = editor.querySelector(".pack-select-grid");
+    function updateSelection() {
+      editor.querySelector("#pack-count").textContent = `· ${selected.size}개 선택`;
+      // Keep the existing controls and images so selection preserves focus and scroll.
+      grid.querySelectorAll(".pack-select-item").forEach(item => {
+        const input = item.querySelector("input");
+        const button = item.querySelector("[data-cover]");
+        const checked = selected.has(input.value);
+        input.checked = checked;
+        item.classList.toggle("selected", checked);
+        button.disabled = !checked;
+        button.setAttribute("aria-pressed", String(cover === input.value));
+        button.textContent = cover === input.value ? "대표 스티커" : "대표로 선택";
+      });
+    }
     function drawChoices() {
       const keyword = editor.querySelector("#pack-search").value.trim().toLocaleLowerCase();
       const filtered = assets.filter(a => a.name.toLocaleLowerCase().includes(keyword));
       editor.querySelector("#pack-count").textContent = `· ${selected.size}개 선택`;
-      const grid = editor.querySelector(".pack-select-grid");
       grid.innerHTML = filtered.length ? filtered.map(a => `<div class="pack-select-item ${selected.has(a.id) ? "selected" : ""}"><label><input type="checkbox" value="${e(a.id)}" ${selected.has(a.id) ? "checked" : ""}><img data-asset="${e(a.id)}" alt="" hidden><span title="${e(a.name)}">${e(a.name)}</span></label><button type="button" data-cover="${e(a.id)}" aria-pressed="${cover === a.id}" ${selected.has(a.id) ? "" : "disabled"}>${cover === a.id ? "대표 스티커" : "대표로 선택"}</button></div>`).join("") : '<p class="asset-empty">공유 스티커가 없어요. 꾸미기에서 ‘다함께 사용하기’로 등록해주세요.</p>';
       grid.querySelectorAll("input").forEach(input => input.onchange = () => {
         if (input.checked) {
           if (selected.size >= 200) { input.checked = false; toast("꾸러미에는 최대 200개까지 담을 수 있어요.", true); return; }
           selected.add(input.value); cover ||= input.value;
         } else { selected.delete(input.value); if (cover === input.value) cover = [...selected][0]; }
-        drawChoices();
-        grid.querySelector(`input[value="${input.value}"]`)?.focus({ preventScroll: true });
+        updateSelection();
       });
-      grid.querySelectorAll("[data-cover]").forEach(b => b.onclick = () => { cover = b.dataset.cover; drawChoices(); grid.querySelector(`[data-cover="${cover}"]`)?.focus({ preventScroll: true }); });
+      grid.querySelectorAll("[data-cover]").forEach(b => b.onclick = () => { cover = b.dataset.cover; updateSelection(); });
       hydrateAssets(grid, ctx.repo);
     }
     editor.querySelector("#pack-search").oninput = drawChoices;
