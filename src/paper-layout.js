@@ -27,26 +27,84 @@ export function blockHeight(layout, id) {
   return Number.isFinite(value) && value >= 0 && value <= 200000 ? value : 0;
 }
 
-// Crop only the reading window. Keep the original sheet width, wrapping and
-// sticker coordinate system, so opening/editing the diary never moves content.
+// Presentation-only cropping and spacing. The saved sheet and sticker coordinates
+// stay untouched; all readers apply the same adjustments before viewport scaling.
 const photoStyles = new WeakMap();
 const blockStyles = new WeakMap();
+const paragraphStyles = new WeakMap();
+const stickerTops = new WeakMap();
 const ceilPixel = value => Math.ceil(value - 0.001);
+
+export function readingGaps(blocks, stickers) {
+  return blocks.map(({ top, bottom, contentBottom }) => {
+    let start = Math.min(bottom, Math.max(top, contentBottom));
+    // A sticker may occupy editor whitespace. Only remove space below its full
+    // rotated bounds, never a band through the sticker itself.
+    for (const sticker of stickers) {
+      if (sticker.top < bottom && sticker.bottom > start)
+        start = Math.min(bottom, Math.max(start, sticker.bottom + 8));
+    }
+    start = Math.min(bottom, top + ceilPixel(start - top));
+    return { start, end: bottom, height: bottom - start };
+  });
+}
+
+function compactReadingBlocks(paper, origin, scale, stickers) {
+  const bounds = node => {
+    const rect = node.getBoundingClientRect();
+    return { top: (rect.top - origin.top) / scale, bottom: (rect.bottom - origin.top) / scale };
+  };
+  const blocks = [...paper.querySelectorAll(".fixed-block")].map(node => ({ node, ...bounds(node) }));
+  // Hold every original block in place while measuring its content without the
+  // textarea's empty writing area. This also excludes toolbars and caption inputs.
+  for (const block of blocks) {
+    block.node.style.minHeight = `${block.bottom - block.top}px`;
+    const paragraph = block.node.querySelector(":scope > p");
+    if (paragraph?.textContent.trim()) {
+      paragraph.style.minHeight = "0";
+      paragraph.style.paddingBottom = "10px";
+    }
+  }
+  const gaps = readingGaps(blocks.map(block => ({
+    ...block,
+    contentBottom: Math.max(block.top, ...[...block.node.children].map(node => bounds(node).bottom)),
+  })), stickers.map(({ node }) => bounds(node)));
+  blocks.forEach((block, i) => {
+    block.node.style.minHeight = `${block.bottom - block.top - gaps[i].height}px`;
+  });
+  for (const { node, rect } of stickers) {
+    const top = (rect.top - origin.top) / scale;
+    const shift = gaps.reduce((sum, gap) => sum + (gap.end <= top + 0.001 ? gap.height : 0), 0);
+    node.style.top = `${parseFloat(stickerTops.get(node)) - shift}px`;
+  }
+}
+
 export function readingBounds(paper, layout) {
   const images = [...paper.querySelectorAll("img[data-asset]")];
   if (images.some(img => !img.getAttribute("src") || !img.complete))
     return { width: layout.width, height: paper.offsetHeight };
   const photos = [...paper.querySelectorAll(".entry-photo")];
-  // Re-measure the original sheet after a font/image load or a viewport change.
-  // A narrower photo must not pull later blocks or their stickers upwards.
+  // Always re-measure the original sheet so resizing or delayed font/image loads
+  // cannot compound an earlier spacing adjustment.
   for (const photo of photos) {
     if (!photoStyles.has(photo)) photoStyles.set(photo, photo.style.width);
     photo.style.width = photoStyles.get(photo);
-    const block = photo.closest(".fixed-block");
-    if (block) {
-      if (!blockStyles.has(block)) blockStyles.set(block, block.style.minHeight);
-      block.style.minHeight = blockStyles.get(block);
+  }
+  for (const block of paper.querySelectorAll(".fixed-block")) {
+    if (!blockStyles.has(block)) blockStyles.set(block, block.style.minHeight);
+    block.style.minHeight = blockStyles.get(block);
+    const paragraph = block.querySelector(":scope > p");
+    if (paragraph) {
+      if (!paragraphStyles.has(paragraph)) paragraphStyles.set(paragraph, {
+        minHeight: paragraph.style.minHeight, paddingBottom: paragraph.style.paddingBottom,
+      });
+      Object.assign(paragraph.style, paragraphStyles.get(paragraph));
     }
+  }
+  const stickerNodes = [...paper.querySelectorAll(".placed-sticker")];
+  for (const node of stickerNodes) {
+    if (!stickerTops.has(node)) stickerTops.set(node, node.style.top);
+    node.style.top = stickerTops.get(node);
   }
   const full = { width: layout.width, height: paper.offsetHeight };
   const origin = paper.getBoundingClientRect();
@@ -66,8 +124,8 @@ export function readingBounds(paper, layout) {
     range.selectNodeContents(text);
     for (const rect of range.getClientRects()) include(rect);
   }
-  const stickers = [...paper.querySelectorAll(".placed-sticker")].map(node => node.getBoundingClientRect());
-  for (const rect of stickers) include(rect);
+  const stickers = stickerNodes.map(node => ({ node, rect: node.getBoundingClientRect() }));
+  for (const { rect } of stickers) include(rect);
   const photoWidth = Math.min(layout.width, Math.max(220, ceilPixel(right)));
   const photoFrames = photos.map(photo => ({
     photo, rect: photo.getBoundingClientRect(), block: photo.closest(".fixed-block"),
@@ -77,13 +135,22 @@ export function readingBounds(paper, layout) {
   // under a sticker, and leave photo-only diaries at their original width.
   if (hasBodyText || stickers.length) {
     for (const { photo, rect, block } of photoFrames) {
-      const decorated = stickers.some(s =>
+      const decorated = stickers.some(({ rect: s }) =>
         s.left < rect.right && s.right > rect.left && s.top < rect.bottom && s.bottom > rect.top);
       if (decorated || photoWidth >= rect.width / scale) continue;
       if (block) block.style.minHeight = `${block.offsetHeight}px`;
       photo.style.width = `${photoWidth}px`;
     }
   }
+  compactReadingBlocks(paper, origin, scale, stickers);
+  right = 0; bottom = 0;
+  for (const text of paper.querySelectorAll(".blocks p, .photo-caption")) {
+    if (!text.textContent.trim()) continue;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    for (const rect of range.getClientRects()) include(rect);
+  }
+  for (const node of stickerNodes) include(node.getBoundingClientRect());
   for (const photo of photos) include(photo.getBoundingClientRect());
   if (!right || !bottom) return full;
   return {
