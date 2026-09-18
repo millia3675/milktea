@@ -1,5 +1,5 @@
 import { dailyQuestion } from "./daily-question.js";
-import { e, icon, emptyState, busy } from "./ui.js";
+import { e, icon, emptyState, busy, toast } from "./ui.js";
 import {
   today,
   addDays,
@@ -231,7 +231,7 @@ export async function personPage(root, ctx, id, archive, params) {
   }
   await mountFeed(feed, ctx, entries, { single: true });
 }
-export async function detailPage(root, ctx, id) {
+export async function detailPage(root, ctx, id, params = new URLSearchParams()) {
   const entry = await ctx.repo.entry(id);
   if (ctx.signal.aborted) return;
   if (!entry) {
@@ -252,6 +252,25 @@ export async function detailPage(root, ctx, id) {
     single: true,
     detail: true,
   });
+  const commentId = params.get("comment"), notificationId = params.get("notification");
+  if (!commentId || ctx.signal.aborted) return;
+  const row = [...root.querySelectorAll("[data-comment]")].find(node => node.dataset.comment === commentId);
+  if (!row) { toast("댓글이 삭제되었거나 더 이상 볼 수 없어요."); return; }
+  row.closest("details")?.setAttribute("open", "");
+  row.classList.add("notification-target");
+  // Wait for photos and the fixed paper's layout before jumping below the diary.
+  const images = [...root.querySelectorAll("img[src]")];
+  await Promise.race([
+    Promise.allSettled(images.map(img => img.decode())),
+    new Promise(resolve => setTimeout(resolve, 1500)),
+  ]);
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  if (ctx.signal.aborted) return;
+  row.focus({ preventScroll: true }); row.scrollIntoView({ block: "center" });
+  if (/^[0-9a-f-]{36}$/i.test(notificationId || "")) {
+    try { await ctx.markNotificationsRead([notificationId]); }
+    catch { if (!ctx.signal.aborted) toast("댓글은 열었지만 읽음 표시를 저장하지 못했어요. 알림함에서 다시 확인해주세요.", true); }
+  }
 }
 export function draftsPage(root, ctx) {
   const drafts = ctx.state.entries

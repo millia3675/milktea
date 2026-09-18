@@ -1,6 +1,8 @@
 import "./styles.css";
 import "./paper.css";
 import "./community.css";
+import "./notifications.css";
+import { mountNotificationNav, notificationsPage } from "./notifications.js";
 import {
   CloudRepository,
   DemoRepository,
@@ -168,6 +170,7 @@ async function render() {
     )
       search.set("month", today().slice(0, 7));
     renderShell(path);
+    const refreshNotifications = mountNotificationNav(app, path, repo, routeController.signal);
     const root = app.querySelector("#main");
     const ctx = {
       repo,
@@ -176,6 +179,11 @@ async function render() {
       signal: routeController.signal,
       go,
       reload: render,
+      refreshNotifications,
+      async markNotificationsRead(ids = null) {
+        await ctx.repo.markNotificationsRead(ids);
+        await refreshNotifications();
+      },
       setEditor(value) {
         editor = value;
       },
@@ -205,7 +213,8 @@ async function render() {
       const parts = path.split("/");
       await personPage(root, ctx, parts[2], parts[3] === "archive", search);
     } else if (path.startsWith("/entries/"))
-      await detailPage(root, ctx, path.split("/")[2]);
+      await detailPage(root, ctx, path.split("/")[2], search);
+    else if (path === "/notifications") await notificationsPage(root, ctx);
     else if (path === "/drafts") draftsPage(root, ctx);
     else if (path === "/write" || path.startsWith("/write/")) {
       const { editorPage } = await import("./editor.js");
@@ -306,8 +315,8 @@ window.addEventListener("hashchange", async () => {
     return;
   }
   allowNavigation = false;
-  await render();
   window.scrollTo(0, 0);
+  await render();
 });
 window.addEventListener("beforeunload", (event) => {
   if (editor?.dirty) {

@@ -1,3 +1,5 @@
+import { visibleStickerRect } from "./sticker-visible-bounds.js";
+
 // A saved sheet has one coordinate space. Resizing only scales its presentation.
 export function paperLayout(document) {
   const layout = document.layout;
@@ -68,7 +70,9 @@ function compactReadingBlocks(paper, origin, scale, stickers) {
   const gaps = readingGaps(blocks.map(block => ({
     ...block,
     contentBottom: Math.max(block.top, ...[...block.node.children].map(node => bounds(node).bottom)),
-  })), stickers.map(({ node }) => bounds(node)));
+  })), stickers.filter(({ rect }) => rect.width && rect.height).map(({ rect }) => ({
+    top: (rect.top - origin.top) / scale, bottom: (rect.bottom - origin.top) / scale,
+  })));
   blocks.forEach((block, i) => {
     block.node.style.minHeight = `${block.bottom - block.top - gaps[i].height}px`;
   });
@@ -124,7 +128,7 @@ export function readingBounds(paper, layout) {
     range.selectNodeContents(text);
     for (const rect of range.getClientRects()) include(rect);
   }
-  const stickers = stickerNodes.map(node => ({ node, rect: node.getBoundingClientRect() }));
+  const stickers = stickerNodes.map(node => ({ node, rect: visibleStickerRect(node, scale) }));
   for (const { rect } of stickers) include(rect);
   const photoWidth = Math.min(layout.width, Math.max(220, ceilPixel(right)));
   const photoFrames = photos.map(photo => ({
@@ -150,7 +154,7 @@ export function readingBounds(paper, layout) {
     range.selectNodeContents(text);
     for (const rect of range.getClientRects()) include(rect);
   }
-  for (const node of stickerNodes) include(node.getBoundingClientRect());
+  for (const node of stickerNodes) include(visibleStickerRect(node, scale));
   for (const photo of photos) include(photo.getBoundingClientRect());
   if (!right || !bottom) return full;
   return {

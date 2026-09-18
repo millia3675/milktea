@@ -1,0 +1,26 @@
+.mobile-account-actions { display: flex; align-items: center; gap: 10px; }
+.notification-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 6px; background: #8c3758; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; margin-left: auto; }
+.notification-bell { position: relative; }
+.notification-bell .notification-count { position: absolute; top: -2px; right: -5px; min-width: 18px; height: 18px; padding: 0 3px; font-size: 10px; }
+.notifications-page { max-width: 900px; margin-inline: auto; }
+.notification-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.notification-filters [aria-pressed="true"] { color: #fff; background: #5265a2; border-color: #5265a2; }
+.notification-filters > .text-button { margin-left: auto; min-height: 44px; }
+.notification-row { display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px; border-bottom: 1px solid var(--reading-line, #dedbd3); color: var(--ink); }
+.notification-row.unread { background: #fffaf1; background-image: var(--paper-grain); }
+.notification-row:hover { background-color: #f2efe7; }
+.notification-row > .avatar { flex-shrink: 0; }
+.notification-row > .icon { flex-shrink: 0; width: 16px; margin-top: 10px; color: #6c7281; }
+.notification-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.notification-summary { margin: 0 0 6px; font-size: .9375rem; line-height: 1.7; }
+.notification-unread-label { display: inline-block; color: #8c3758; font-size: .75rem; font-weight: 700; margin-left: 8px; }
+.notification-preview { margin: 0 0 8px; font-size: .9375rem; line-height: 1.7; color: #46516a; white-space: pre-wrap; }
+.notification-context { margin: 0; font-size: .75rem; line-height: 1.7; color: #656a78; }
+.comment-row.notification-target { outline: 2px solid #a86782; outline-offset: 4px; background: #fff8ee; }
+.comment-row { scroll-margin-block: 100px 24px; }
+@media (max-width: 540px) {
+  .notifications-page .page-heading { gap: 12px; }
+  .notification-row { gap: 10px; padding: 18px 8px; }
+  .notification-row > .avatar { width: 32px; height: 32px; font-size: 16px; }
+  .notification-row > .icon { display: none; }
+}

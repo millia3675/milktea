@@ -8,6 +8,7 @@ export const e = (value) =>
   );
 export const uuid = () => crypto.randomUUID();
 const paths = {
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
   music:
     '<path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/>',
   play: '<path d="m8 4 12 8-12 8z"/>',

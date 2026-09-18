@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { makeSeed, DEMO_USER } from "./seed.js";
 import { uuid, userError } from "./ui.js";
 import { validateEntry } from "./validation.js";
+import { commentRecipients } from "./notification-data.js";
 
 const runtime = window.MILKTEA_CONFIG || {};
 export const config = {
@@ -178,6 +179,23 @@ export class CloudRepository {
       throw userError(details?.message || "초대 링크를 만들지 못했어요. 잠시 후 다시 시도해주세요.");
     }
     return data;
+  }
+  async unreadNotifications() {
+    const result = await client.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null);
+    check(result);
+    return result.count || 0;
+  }
+  async notifications({ unread = false, before = null } = {}) {
+    let query = client.from("notifications")
+      .select("*,actor:profiles!notifications_actor_id_fkey(*),entry:diary_entries(title,diary_date),comment:comments(content,image_asset_id)")
+      .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(31);
+    if (unread) query = query.is("read_at", null);
+    if (before) query = query.or(`created_at.lt.${before.created_at},and(created_at.eq.${before.created_at},id.lt.${before.id})`);
+    const rows = check(await query);
+    return { items: rows.slice(0, 30), more: rows.length > 30 };
+  }
+  async markNotificationsRead(ids = null) {
+    check(await client.rpc("mark_notifications_read", { p_ids: ids }));
   }
   async stickerPacks() {
     const [packs, items] = await Promise.all([
@@ -503,7 +521,37 @@ export class DemoRepository {
   }
   async data() {
     if (!(await read("state", "data"))) await mutate(() => {});
+    const current = await read("state", "data");
+    if (!current.notifications) await mutate(d => {
+      const migratedAt = new Date().toISOString();
+      d.notifications = d.comments.flatMap(c => commentRecipients(c,
+        d.entries.find(x => x.id === c.entry_id), d.comments.find(x => x.id === c.parent_id),
+      ).map(recipient => ({ id: uuid(), ...recipient, actor_id: c.author_id,
+        entry_id: c.entry_id, comment_id: c.id, created_at: c.created_at, read_at: migratedAt })));
+    });
     return read("state", "data");
+  }
+  async notificationRows() {
+    const d = await this.data();
+    return d.notifications.filter(n => n.recipient_id === this.user.id &&
+      d.entries.some(e => e.id === n.entry_id && e.status === "published") &&
+      d.comments.some(c => c.id === n.comment_id) && d.profiles.some(p => p.id === n.actor_id))
+      .map(n => ({ ...n, actor: d.profiles.find(p => p.id === n.actor_id),
+        entry: d.entries.find(e => e.id === n.entry_id), comment: d.comments.find(c => c.id === n.comment_id) }))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+  }
+  async unreadNotifications() { return (await this.notificationRows()).filter(n => !n.read_at).length; }
+  async notifications({ unread = false, before = null } = {}) {
+    const rows = (await this.notificationRows()).filter(n => (!unread || !n.read_at) &&
+      (!before || n.created_at < before.created_at || n.created_at === before.created_at && n.id < before.id));
+    return { items: structuredClone(rows.slice(0, 30)), more: rows.length > 30 };
+  }
+  async markNotificationsRead(ids = null) {
+    await this.data();
+    return mutate(d => {
+      for (const n of d.notifications) if (n.recipient_id === this.user.id && !n.read_at &&
+        (!ids || ids.includes(n.id))) n.read_at = new Date().toISOString();
+    });
   }
   async bootstrap() {
     const d = await this.data();
@@ -616,7 +664,13 @@ export class DemoRepository {
         updated_at: now,
       };
       if (old) d.comments[d.comments.indexOf(old)] = value;
-      else d.comments.push(value);
+      else {
+        d.comments.push(value);
+        d.notifications ||= [];
+        for (const recipient of commentRecipients(value, parent, d.comments.find(c => c.id === value.parent_id)))
+          d.notifications.push({ id: uuid(), ...recipient, actor_id: value.author_id,
+            entry_id: value.entry_id, comment_id: value.id, created_at: now, read_at: null });
+      }
       return value;
     });
   }
