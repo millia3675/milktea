@@ -23,7 +23,7 @@
 .admin-invite .field-label, .pack-editor-form .field-label { color: #686575; }
 .admin-invite input::placeholder, .pack-editor-form input::placeholder { color: #707387; }
 .admin-invite .button.secondary, .admin-packs .button.secondary { color: #52628d; }
-.template-sheet > p { margin: 25px 24px; position: relative; z-index: 2; font-size: 20px; }
+.template-sheet > p { margin: 25px 24px; position: relative; z-index: 3; font-size: 20px; }
 .template-sheet .placed-sticker { width: 80px; }
 .template-caption { padding: 20px; }
 .template-caption h2 { font-size: 19px; margin: 0 0 7px; overflow-wrap: anywhere; }

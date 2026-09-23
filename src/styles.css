@@ -1001,7 +1001,12 @@ h3 {
 .fixed-paper .fixed-block .photo-caption { margin: 0; padding: 8px; }
 .paper .blocks {
   position: relative;
-  z-index: 2;
+  /* Keep text and photos in the paper's stacking context, not one shared layer. */
+}
+.paper .blocks p,
+.paper .photo-caption {
+  position: relative;
+  z-index: 3;
 }
 .paper p {
   font-size: 1rem;
@@ -1052,6 +1057,8 @@ h3 {
     sans-serif;
 }
 .entry-photo {
+  position: relative;
+  z-index: 1;
   display: block;
   border: 0;
   background: #f3f5fa;
@@ -1078,7 +1085,8 @@ h3 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  /* Paper < photos (1) < stickers (2) < text and editing controls (3). */
+  z-index: 2;
   opacity: 0.65;
   overflow: hidden;
 }
@@ -1592,13 +1600,14 @@ h3 {
 }
 .editor-content .block-list {
   position: relative;
-  z-index: 2;
 }
 .editor-block {
   position: relative;
   margin: 0 0 14px;
 }
 .editor-block textarea {
+  position: relative;
+  z-index: 3;
   width: 100%;
   border: 1px solid transparent;
   background: transparent;
@@ -1614,6 +1623,8 @@ h3 {
   outline-offset: 0;
 }
 .block-tools {
+  position: relative;
+  z-index: 3;
   display: flex;
   gap: 2px;
   justify-content: flex-end;
@@ -1642,6 +1653,8 @@ h3 {
   padding: 8px;
 }
 .editor-image img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-height: 400px;
   object-fit: contain;
@@ -1649,6 +1662,8 @@ h3 {
   display: block;
 }
 .editor-image input {
+  position: relative;
+  z-index: 3;
   font-size: 0.8rem;
   width: 100%;
   background: transparent;
